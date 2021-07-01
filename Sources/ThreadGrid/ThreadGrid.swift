@@ -14,9 +14,14 @@ public struct ThreadGrid {
             pass.pass()            
         }
     }
+    
+    func passStack() {
+        _ = PassStack(packet: RenderPacket())
+    }
+    
     public func run() {
         print("run")
-        render()
+        passStack()
         _ = readLine()
     }
 }

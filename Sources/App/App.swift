@@ -1,4 +1,3 @@
-#if !os(iOS)
 import AppKit
 
 
@@ -19,4 +18,3 @@ public class App {
     }
     
 }
-#endif

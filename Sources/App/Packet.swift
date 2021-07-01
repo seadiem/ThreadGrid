@@ -1,4 +1,3 @@
-#if !os(iOS)
 import AppKit
 
 public struct ControllerPacket {
@@ -14,4 +13,3 @@ public struct ControllerPacket {
         self.systemCallClosure = systemCallClosure
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if !os(iOS)
 import AppKit
 
 class WindowController: NSWindowController, NSWindowDelegate {
@@ -9,7 +8,7 @@ class WindowController: NSWindowController, NSWindowDelegate {
     
     init(packet: ControllerPacket) {
         
-        var rect = NSRect(x: 100, y: 100, width: 400, height: 700)
+        var rect = NSRect(x: 100, y: 100, width: 400, height: 300)
         let mask: NSWindow.StyleMask = [.resizable, .titled, .closable, .miniaturizable]
         
         let outwindow = NSWindow(contentRect: rect, styleMask: mask, backing: NSWindow.BackingStoreType.buffered, defer: false)
@@ -18,12 +17,6 @@ class WindowController: NSWindowController, NSWindowDelegate {
         outwindow.isOpaque = false
         outwindow.titleVisibility = .visible
         
-        rect.origin.x += rect.width
-        let windowtwo = NSWindow(contentRect: rect, styleMask: mask, backing: NSWindow.BackingStoreType.buffered, defer: false)
-        windowtwo.backgroundColor = NSColor.brown
-        windowtwo.makeKeyAndOrderFront(outwindow)
-        windowtwo.isOpaque = false
-        windowtwo.titleVisibility = .visible
         
         let tuple = packet.initialClosure()
         systemCall = packet.systemCallClosure
@@ -31,7 +24,6 @@ class WindowController: NSWindowController, NSWindowDelegate {
 
         tuple.stored.forEach { stored.append($0) }
         tuple.viewsWindowOne.forEach { outwindow.contentView?.addSubview($0) }
-        tuple.viewsWindowTwo.forEach { windowtwo.contentView?.addSubview($0) }
         
         if tuple.viewsWindowThree.isEmpty == false {
             rect.origin.x += rect.width
@@ -64,4 +56,3 @@ class WindowController: NSWindowController, NSWindowDelegate {
         NSApplication.shared.terminate(0)
     }
 }
-#endif

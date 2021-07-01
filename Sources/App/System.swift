@@ -1,4 +1,3 @@
-#if !os(iOS)
 import AppKit
 
 
@@ -14,4 +13,3 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         windowcontroller.showWindow(self)
     }
 }
-#endif
