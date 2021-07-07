@@ -5,12 +5,11 @@ class Renderer: NSObject {
     var firstState: MTLComputePipelineState?
     var secondState: MTLComputePipelineState?
     let renderPacket: RenderPacket
-    var buffer: Buffer
-    var needrandom = true
+    var buffer: BufferOne
     
     init(metalView: MTKView) {
         renderPacket = RenderPacket()
-        buffer = Buffer(packet: renderPacket)
+        buffer = BufferOne(packet: renderPacket)
         super.init()
         initializeMetal(metalView: metalView)
     }
@@ -30,22 +29,25 @@ class Renderer: NSObject {
     }
     
     func random() {
-        buffer = Buffer(packet: renderPacket)
+        buffer = BufferOne(packet: renderPacket)
+    }
+    func rotate() {
+        buffer.rotate()
     }
     func sort() {
-        buffer.sort()
-        needrandom = false
+//        buffer.sort()
     }
 }
+
+var drawcount = 0
 
 extension Renderer: MTKViewDelegate {
     func draw(in view: MTKView) {
         
-        if needrandom {
-            random()
-        } else {
-            needrandom = true
-        }
+        rotate()
+        
+        drawcount += 1
+        print("draw: \(drawcount)")
    
         guard let commandBuffer = renderPacket.commandQueue.makeCommandBuffer(),
               let commandEncoder = commandBuffer.makeComputeCommandEncoder(),

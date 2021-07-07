@@ -30,7 +30,15 @@ public struct Setup {
 
             
             canvas.mousedrug = { point in
+                
                 metalView.setNeedsDisplay(canvas.bounds)
+                
+//                DispatchQueue.global().async {
+//                    renderer.random()
+//                    DispatchQueue.main.sync {
+//                        metalView.setNeedsDisplay(canvas.bounds)                        
+//                    }                    
+//                }
             }
                         
             defer {

@@ -8,11 +8,12 @@ let package = Package(
     platforms: [ .macOS(.v10_15), .iOS(.v9)],
     dependencies: [
         .package(url: "https://github.com/JohnSundell/Files", .branch("master")),
+        .package(url: "https://github.com/apple/swift-algorithms", .branch("main")),
     ],
     targets: [
         .target(
             name: "ThreadGrid",
-            dependencies: ["Files"]),
+            dependencies: ["Files", .product(name: "Algorithms", package: "swift-algorithms")]),
         .target(
             name: "Draw",
             dependencies: []),
