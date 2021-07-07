@@ -11,6 +11,15 @@
         }
       },
       {
+        "package": "HanoyTowers",
+        "repositoryURL": "/Users/oktet/Code/Learn/HanoyTowers",
+        "state": {
+          "branch": "metal",
+          "revision": "aa3cd0e2a1a316f43561cd11235cbf8e6d6dadc0",
+          "version": null
+        }
+      },
+      {
         "package": "swift-algorithms",
         "repositoryURL": "https://github.com/apple/swift-algorithms",
         "state": {

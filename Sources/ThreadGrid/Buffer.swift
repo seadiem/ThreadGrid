@@ -1,7 +1,7 @@
 import Metal
 import Algorithms
 
-struct BufferColor: Comparable {
+struct BufferColor: Equatable, Comparable {
     static func green() -> BufferColor { BufferColor(red: 30, green: 110, blue: 40) }
     static func random() -> BufferColor {
         BufferColor(red: Int.random(in: 10...50), 

@@ -1,2 +1,3 @@
-Scene().run()
+// Scene().run()
+Scene().test()
 

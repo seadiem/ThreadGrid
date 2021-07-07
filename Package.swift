@@ -9,11 +9,12 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/JohnSundell/Files", .branch("master")),
         .package(url: "https://github.com/apple/swift-algorithms", .branch("main")),
+        .package(url: "/Users/oktet/Code/Learn/HanoyTowers", .branch("metal")),
     ],
     targets: [
         .target(
             name: "ThreadGrid",
-            dependencies: ["Files", .product(name: "Algorithms", package: "swift-algorithms")]),
+            dependencies: ["Files", .product(name: "Algorithms", package: "swift-algorithms"), "HanoyTowers"]),
         .target(
             name: "Draw",
             dependencies: []),

@@ -9,4 +9,7 @@ struct Scene {
     func run() {
         App(packet: Apps().threadGrid).run()
     }
+    func test() {
+        TestThreadGrid().run()
+    }
 }
