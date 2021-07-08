@@ -18,7 +18,7 @@ public struct Setup {
             canvas.backcolor = Color.brown.cgcolor
             
             
-            let metalView = MTKView(frame: CGRect(x: 0, y: 0, width: 400 * 0.8, height: 300 * 0.8))
+            let metalView = MTKView(frame: CGRect(x: 0, y: 0, width: 300, height: 200))
             metalView.preferredFramesPerSecond = 10
             metalView.enableSetNeedsDisplay = true
             metalView.isPaused = true
@@ -30,7 +30,7 @@ public struct Setup {
 
             
             canvas.mousedrug = { point in
-                
+                renderer.point = [Float(point.x), -Float(point.y) + 200]
                 metalView.setNeedsDisplay(canvas.bounds)
                 
 //                DispatchQueue.global().async {

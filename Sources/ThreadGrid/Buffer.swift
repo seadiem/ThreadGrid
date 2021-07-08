@@ -76,10 +76,12 @@ struct BufferOne {
     var count: Int { colors.count }
     var buffer: MTLBuffer { BufferOne.buffer! }
     let packet: RenderPacket
+    let width = 200
+    let height = 100
+    
     init(packet: RenderPacket) {
         self.packet = packet
-        let dimension = 100 * 200
-        var colors = Array(repeating: BufferColor.green(), count: dimension)
+        var colors = Array(repeating: BufferColor.green(), count: width * height)
         colors = colors.map { _ in BufferColor.randomLight() }
         for i in 0...50 { colors[i] = BufferColor(red: 200, green: 100, blue: 150) }
         self.colors = colors
@@ -91,6 +93,53 @@ struct BufferOne {
         colors.rotate(toStartAt: 5)
         let techcolors = colors.map { $0.color }
         let length = MemoryLayout<SIMD4<Float>>.stride * colors.count
-        BufferOne.buffer!.contents().copyMemory(from: techcolors, byteCount: length - length / 2)
+        BufferOne.buffer!.contents().copyMemory(from: techcolors, byteCount: length)
+    }
+}
+
+struct RowBuffer {
+    static var buffer: MTLBuffer?
+    let width = 200
+    let height = 100
+    var rows: [[BufferColor]]
+    var buffer: MTLBuffer { BufferOne.buffer! }
+    init(packet: RenderPacket) {
+        var rows = [[BufferColor]]()
+        for index in 0..<height {
+            let row = Array(repeating: BufferColor(red: 10 + index, green: 10, blue: 10), count: width)
+            rows.append(row)
+        }
+        let minirow = Array(repeating: BufferColor(red: 200, green: 100, blue: 150), count: 20)
+        rows[0].replaceSubrange(minirow.indices, with: minirow)
+        self.rows = rows
+        let array = rows.reduce([BufferColor]()) { $0 + $1 }.map { $0.color }
+        let length = MemoryLayout<SIMD4<Float>>.stride * array.count
+        BufferOne.buffer = packet.device.makeBuffer(bytes: array, length: length, options: .cpuCacheModeWriteCombined)!
+    }
+    mutating func rotate() {
+        rows.rotate(toStartAt: 5)
+        fillBuffer()
+    }
+    mutating func shuffle() {
+        rows.shuffle()
+        fillBuffer()
+    }
+    mutating func fullRotate() {
+        
+        rows.rotate(toStartAt: 1)
+        
+        var array = rows.reduce([BufferColor]()) { $0 + $1 }
+        array.rotate(toStartAt: 10)
+        rows = array.chunks(ofCount: width).map { chunk in Array(chunk) }
+        
+        let colors = array.map { $0.color }
+        let length = MemoryLayout<SIMD4<Float>>.stride * colors.count
+        BufferOne.buffer!.contents().copyMemory(from: colors, byteCount: length)
+        print("full rotate")
+    }
+    mutating func fillBuffer() {
+        let array = rows.reduce([BufferColor]()) { $0 + $1 }.map { $0.color }
+        let length = MemoryLayout<SIMD4<Float>>.stride * array.count
+        BufferOne.buffer!.contents().copyMemory(from: array, byteCount: length)
     }
 }

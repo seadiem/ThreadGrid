@@ -1,9 +1,16 @@
-enum Pixel: Equatable, Comparable {
+import Induction
+
+enum Pixel: Equatable, Comparable, EmptyInit {
+    
     case empty
     case full(BufferColor)
+    
+    var isEmpty: Bool { self == .empty }
+    
     init() {
         self = .empty
     }
+    
     static func == (lhs: Pixel, rhs: Pixel) -> Bool {
         switch lhs {
         case .full(let leftcolor):
