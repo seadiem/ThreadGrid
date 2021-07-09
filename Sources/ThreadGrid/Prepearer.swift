@@ -19,7 +19,7 @@ public struct Setup {
             
             
             let metalView = MTKView(frame: CGRect(x: 0, y: 0, width: 300, height: 200))
-            metalView.preferredFramesPerSecond = 10
+            metalView.preferredFramesPerSecond = 60
             metalView.enableSetNeedsDisplay = true
             metalView.isPaused = true
             canvas.addSubview(metalView)
@@ -30,9 +30,13 @@ public struct Setup {
 
             
             canvas.mousedrug = { point in
-                renderer.point = [Float(point.x), -Float(point.y) + 200]
+                renderer.point.position = [Float(point.x), -Float(point.y) + 200]
                 metalView.setNeedsDisplay(canvas.bounds)
-
+            }
+            
+            canvas.mousedown = { point in
+                renderer.select(at: [Float(point.x), -Float(point.y) + 200])
+                metalView.setNeedsDisplay(canvas.bounds)
             }
                         
             defer {

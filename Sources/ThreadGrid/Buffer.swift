@@ -3,8 +3,8 @@ import Algorithms
 
 struct RowBuffer {
     static var buffer: MTLBuffer?
-    let width = 200
-    let height = 100
+    let width = 400
+    let height = 300
     var rows: [[BufferColor]]
     var buffer: MTLBuffer { RowBuffer.buffer! }
     init(packet: RenderPacket) {

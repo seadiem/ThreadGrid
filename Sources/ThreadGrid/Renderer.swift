@@ -6,13 +6,14 @@ class Renderer: NSObject {
     var secondState: MTLComputePipelineState?
     let renderPacket: RenderPacket
     var buffer: RowBuffer
-    var point: SIMD2<Float>
+    var point: Butterfly
     var insects: Butterflies
     
     init(metalView: MTKView) {
         renderPacket = RenderPacket()
         buffer = RowBuffer(packet: renderPacket)
-        point = .zero
+        let position: SIMD2<Float> = [100, 50]
+        point = Butterfly(id: 0, position: position, velocity: .zero)
         insects = Butterflies(packet: renderPacket)
         super.init()
         initializeMetal(metalView: metalView)
@@ -44,16 +45,17 @@ class Renderer: NSObject {
     func sort() {
         buffer.fullSort()
     }
+    func select(at point: SIMD2<Float>) {
+        if let last = insects.select(at: point, current: self.point) {
+            self.point = last
+        }
+    }
 }
 
-var drawcount = 0
 
 extension Renderer: MTKViewDelegate {
     func draw(in view: MTKView) {
         
-        
-        drawcount += 1
-   
         guard let commandBuffer = renderPacket.commandQueue.makeCommandBuffer(),
               let commandEncoder = commandBuffer.makeComputeCommandEncoder(),
               let drawable = view.currentDrawable else {
@@ -73,7 +75,7 @@ extension Renderer: MTKViewDelegate {
         threadsPerGroup = MTLSizeMake(1, 1, 1)
         threadsPerGrid = MTLSizeMake(insects.count, 1, 1)
         let points = [point]
-        let length = MemoryLayout<SIMD2<Float>>.stride * points.count
+        let length = MemoryLayout<Butterfly>.stride * points.count
         commandEncoder.setBytes(points, length: length, index: 1)
         commandEncoder.setBuffer(insects.particleBuffer, offset: 0, index: 0)
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
@@ -86,7 +88,6 @@ extension Renderer: MTKViewDelegate {
         commandEncoder.setBuffer(buffer.buffer, offset: 0, index: 0)
         commandEncoder.setBytes(points, length: length, index: 1)
         commandEncoder.setBuffer(insects.particleBuffer, offset: 0, index: 2)
-        
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         
         commandEncoder.endEncoding()

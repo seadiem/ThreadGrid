@@ -1,4 +1,5 @@
 import Metal
+import simd
 
 struct Butterfly: Equatable, Hashable {
     let id: Int
@@ -27,5 +28,21 @@ struct Butterflies {
         self.incects = incects
         let length = MemoryLayout<Butterfly>.stride * incects.count
         particleBuffer = packet.device.makeBuffer(bytes: incects, length: length, options: .cpuCacheModeWriteCombined)!
+    }
+    mutating func select(at point: SIMD2<Float>, current: Butterfly) -> Butterfly? {
+        let result = particleBuffer.contents().bindMemory(to: Butterfly.self, capacity: count)
+        var array = Array(repeating: Butterfly(id: 0, position: .zero, velocity: .zero), count: count)
+        for i in 0 ..< count { array[i] = result[i] }
+        array.sort { distance(point, $0.position) < distance(point, $1.position) }
+        if distance(array.first!.position, point) < distance(current.position, point) {
+            let last = array.removeFirst()
+            array.append(current)
+            let length = MemoryLayout<Butterfly>.stride * count
+            particleBuffer.contents().copyMemory(from: array, byteCount: length)
+            incects = array
+            return last
+        } else {
+            return nil
+        }
     }
 }
