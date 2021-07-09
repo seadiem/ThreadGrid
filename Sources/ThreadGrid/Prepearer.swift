@@ -32,13 +32,7 @@ public struct Setup {
             canvas.mousedrug = { point in
                 renderer.point = [Float(point.x), -Float(point.y) + 200]
                 metalView.setNeedsDisplay(canvas.bounds)
-                
-//                DispatchQueue.global().async {
-//                    renderer.random()
-//                    DispatchQueue.main.sync {
-//                        metalView.setNeedsDisplay(canvas.bounds)                        
-//                    }                    
-//                }
+
             }
                         
             defer {
@@ -51,6 +45,16 @@ public struct Setup {
                         case "sort":
                             DispatchQueue.main.async {
                                 renderer.sort()
+                                metalView.setNeedsDisplay(canvas.bounds)
+                            }
+                        case "part":
+                            DispatchQueue.main.async {
+                                renderer.part()
+                                metalView.setNeedsDisplay(canvas.bounds)
+                            }
+                        case "shuf":
+                            DispatchQueue.main.async {
+                                renderer.shuffle()
                                 metalView.setNeedsDisplay(canvas.bounds)
                             }
                         default: break
