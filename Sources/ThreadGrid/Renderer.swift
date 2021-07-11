@@ -1,4 +1,5 @@
 import MetalKit
+import MetalPerformanceShaders
 
 class Renderer: NSObject {
     var insectState: MTLComputePipelineState?
@@ -52,7 +53,6 @@ class Renderer: NSObject {
     }
 }
 
-
 extension Renderer: MTKViewDelegate {
     func draw(in view: MTKView) {
         
@@ -89,11 +89,29 @@ extension Renderer: MTKViewDelegate {
         commandEncoder.setBytes(points, length: length, index: 1)
         commandEncoder.setBuffer(insects.particleBuffer, offset: 0, index: 2)
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-        
         commandEncoder.endEncoding()
+        
+        // effects
+        let blur = MPSImageGaussianBlur(device: renderPacket.device, sigma: 10)
+        
+        let inPlaceTexture = UnsafeMutablePointer<MTLTexture>.allocate(capacity: 1)
+        inPlaceTexture.initialize(to: drawable.texture)
+        
+        blur.encode(commandBuffer: commandBuffer, 
+                    inPlaceTexture: inPlaceTexture, 
+                    fallbackCopyAllocator: allocator)
+        
         commandBuffer.present(drawable)
         commandBuffer.commit()
     }
     
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+    
+    func allocator(kernel: MPSKernel, buffer: MTLCommandBuffer, texture: MTLTexture) -> MTLTexture {
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: texture.pixelFormat,
+                                                                  width: texture.width,
+                                                                  height: texture.height,
+                                                                  mipmapped: false)
+        return buffer.device.makeTexture(descriptor: descriptor)!
+    }
 }
