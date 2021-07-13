@@ -87,7 +87,7 @@ extension RendererLights: MTKViewDelegate {
         
         // light pass
         commandEncoder.setComputePipelineState(secondState)
-        commandEncoder.setTexture(middleTexture, index: 0)
+        commandEncoder.setTexture(drawable.texture, index: 0)
         threadsPerGroup = MTLSizeMake(width, height, 1)
         threadsPerGrid = MTLSizeMake(buffer.width, buffer.height, 1)
         commandEncoder.setBuffer(buffer.buffer, offset: 0, index: 0)
@@ -97,24 +97,24 @@ extension RendererLights: MTKViewDelegate {
         commandEncoder.dispatchThreadgroups(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         commandEncoder.endEncoding()
         
-        // effects
-        let shader = MPSImageSobel(device: renderPacket.device)
-        shader.encode(commandBuffer: commandBuffer, sourceTexture: middleTexture, destinationTexture: effectedTexture1)
-        let blur = MPSImageGaussianBlur(device: renderPacket.device, sigma: 10)
-        blur.encode(commandBuffer: commandBuffer, sourceTexture: middleTexture, destinationTexture: effectedTexture2)
-        
-        // compose pass
-        guard let encoderSecond = commandBuffer.makeComputeCommandEncoder() else { return }
-        encoderSecond.setComputePipelineState(composeState!)
-        encoderSecond.setTexture(drawable.texture, index: 0)
-        encoderSecond.setTexture(effectedTexture2, index: 1)
-        encoderSecond.setTexture(effectedTexture1, index: 2)
-        encoderSecond.setBytes(points, length: length, index: 1)
-        threadsPerGroup = MTLSizeMake(width, height, 1)
-        threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
-//        encoderSecond.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-        encoderSecond.dispatchThreadgroups(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-        encoderSecond.endEncoding()
+//        // effects
+//        let shader = MPSImageSobel(device: renderPacket.device)
+//        shader.encode(commandBuffer: commandBuffer, sourceTexture: middleTexture, destinationTexture: effectedTexture1)
+//        let blur = MPSImageGaussianBlur(device: renderPacket.device, sigma: 10)
+//        blur.encode(commandBuffer: commandBuffer, sourceTexture: middleTexture, destinationTexture: effectedTexture2)
+//        
+//        // compose pass
+//        guard let encoderSecond = commandBuffer.makeComputeCommandEncoder() else { return }
+//        encoderSecond.setComputePipelineState(composeState!)
+//        encoderSecond.setTexture(drawable.texture, index: 0)
+//        encoderSecond.setTexture(effectedTexture2, index: 1)
+//        encoderSecond.setTexture(effectedTexture1, index: 2)
+//        encoderSecond.setBytes(points, length: length, index: 1)
+//        threadsPerGroup = MTLSizeMake(width, height, 1)
+//        threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
+////        encoderSecond.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+//        encoderSecond.dispatchThreadgroups(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+//        encoderSecond.endEncoding()
         
 //        // blit encoder
 //        guard let blitEncoder = commandBuffer.makeBlitCommandEncoder() else {return }
