@@ -70,7 +70,9 @@ extension RendererLights: MTKViewDelegate {
         let height = firstState.maxTotalThreadsPerThreadgroup / width
         var threadsPerGroup = MTLSizeMake(width, height, 1)
         var threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
-        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+//        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        
+        commandEncoder.dispatchThreadgroups(threadsPerGroup, threadsPerThreadgroup: threadsPerGroup)
         
         // insect pass
         commandEncoder.setComputePipelineState(insectState)
@@ -80,7 +82,8 @@ extension RendererLights: MTKViewDelegate {
         let length = MemoryLayout<Butterfly>.stride * points.count
         commandEncoder.setBytes(points, length: length, index: 1)
         commandEncoder.setBuffer(insects.particleBuffer, offset: 0, index: 0)
-        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+//        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        commandEncoder.dispatchThreadgroups(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         
         // light pass
         commandEncoder.setComputePipelineState(secondState)
@@ -90,7 +93,8 @@ extension RendererLights: MTKViewDelegate {
         commandEncoder.setBuffer(buffer.buffer, offset: 0, index: 0)
         commandEncoder.setBytes(points, length: length, index: 1)
         commandEncoder.setBuffer(insects.particleBuffer, offset: 0, index: 2)
-        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+//        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        commandEncoder.dispatchThreadgroups(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         commandEncoder.endEncoding()
         
         // effects
@@ -108,6 +112,7 @@ extension RendererLights: MTKViewDelegate {
         encoderSecond.setBytes(points, length: length, index: 1)
         threadsPerGroup = MTLSizeMake(width, height, 1)
         threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
+//        encoderSecond.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         encoderSecond.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         encoderSecond.endEncoding()
         
