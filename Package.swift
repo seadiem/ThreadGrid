@@ -17,7 +17,7 @@ let package = Package(
     targets: [
         .target(
             name: "ThreadGrid",
-            dependencies: ["Files", .product(name: "Algorithms", package: "swift-algorithms"), "HanoyTowers", "Draw"]),
+            dependencies: ["Files", .product(name: "Algorithms", package: "swift-algorithms"), "HanoyTowers"]),
         .target(
             name: "Draw",
             dependencies: []),

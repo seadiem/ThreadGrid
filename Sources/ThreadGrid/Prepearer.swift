@@ -1,3 +1,4 @@
+#if os(macOS)
 import MetalKit
 import Draw
 import App
@@ -87,3 +88,4 @@ public struct Setup {
     }
     
 }
+#endif
