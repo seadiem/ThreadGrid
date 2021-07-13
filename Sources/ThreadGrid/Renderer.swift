@@ -2,14 +2,16 @@ import MetalKit
 import MetalPerformanceShaders
 
 class Renderer: NSObject {
+    
+    var point: Butterfly
+    var insects: Butterflies
+    var buffer: RowBuffer
+    
+    let renderPacket: RenderPacket
     let insectState: MTLComputePipelineState
     let firstState: MTLComputePipelineState
     let secondState: MTLComputePipelineState
     var composeState: MTLComputePipelineState?
-    let renderPacket: RenderPacket
-    var buffer: RowBuffer
-    var point: Butterfly
-    var insects: Butterflies
     var middleTexture: MTLTexture
     var effectedTexture1: MTLTexture
     var effectedTexture2: MTLTexture

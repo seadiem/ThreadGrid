@@ -6,6 +6,9 @@ import PackageDescription
 let package = Package(
     name: "ThreadGrid",
     platforms: [ .macOS(.v10_15), .iOS(.v9)],
+    products: [
+        .library(name: "Lights", targets: ["ThreadGrid"]),
+    ],
     dependencies: [
         .package(url: "https://github.com/JohnSundell/Files", .branch("master")),
         .package(url: "https://github.com/apple/swift-algorithms", .branch("main")),
