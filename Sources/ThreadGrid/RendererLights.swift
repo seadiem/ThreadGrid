@@ -5,12 +5,15 @@ class RendererLights: NSObject {
     let insectState: MTLComputePipelineState
     let firstState: MTLComputePipelineState
     let secondState: MTLComputePipelineState
+    var composeState: MTLComputePipelineState?
     let renderPacket: RenderPacket
     var buffer: RowBuffer
     var point: Butterfly
     var insects: Butterflies
-    let texture: MTLTexture
-    let middleTexture: MTLTexture
+    var middleTexture: MTLTexture
+    var effectedTexture1: MTLTexture
+    var effectedTexture2: MTLTexture
+    var composedTexture: MTLTexture
     
     init(metalView: MTKView) {
         renderPacket = RenderPacket()
@@ -25,12 +28,16 @@ class RendererLights: NSObject {
         let zeroPass = library.makeFunction(name: "insectPass")!
         let firstPass = library.makeFunction(name: "firstPass")!
         let secondPass = library.makeFunction(name: "secondPassLight")!
+        let composePass = library.makeFunction(name: "copyTextures")!
         insectState = try! renderPacket.device.makeComputePipelineState(function: zeroPass)
         firstState = try! renderPacket.device.makeComputePipelineState(function: firstPass)
         secondState = try! renderPacket.device.makeComputePipelineState(function: secondPass)
+        composeState = try! renderPacket.device.makeComputePipelineState(function: composePass)
         
-        texture = RendererLights.makeTexture(view: metalView, device: renderPacket.device)!
         middleTexture = RendererLights.makeTexture(view: metalView, device: renderPacket.device)!
+        effectedTexture1 = RendererLights.makeTexture(view: metalView, device: renderPacket.device)!
+        effectedTexture2 = RendererLights.makeTexture(view: metalView, device: renderPacket.device)!
+        composedTexture = RendererLights.makeTexture(view: metalView, device: renderPacket.device)!
         
         super.init()
     }
@@ -76,7 +83,7 @@ extension RendererLights: MTKViewDelegate {
         // light pass
         commandEncoder.setComputePipelineState(secondState)
         commandEncoder.setTexture(middleTexture, index: 0)
-        threadsPerGroup = MTLSizeMake(1, 1, 1)
+        threadsPerGroup = MTLSizeMake(width, height, 1)
         threadsPerGrid = MTLSizeMake(buffer.width, buffer.height, 1)
         commandEncoder.setBuffer(buffer.buffer, offset: 0, index: 0)
         commandEncoder.setBytes(points, length: length, index: 1)
@@ -84,11 +91,29 @@ extension RendererLights: MTKViewDelegate {
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         commandEncoder.endEncoding()
         
+        // effects
+        let shader = MPSImageSobel(device: renderPacket.device)
+        shader.encode(commandBuffer: commandBuffer, sourceTexture: middleTexture, destinationTexture: effectedTexture1)
+        let blur = MPSImageGaussianBlur(device: renderPacket.device, sigma: 10)
+        blur.encode(commandBuffer: commandBuffer, sourceTexture: middleTexture, destinationTexture: effectedTexture2)
+        
+        // compose pass
+        guard let encoderSecond = commandBuffer.makeComputeCommandEncoder() else { return }
+        encoderSecond.setComputePipelineState(composeState!)
+        encoderSecond.setTexture(composedTexture, index: 0)
+        encoderSecond.setTexture(effectedTexture2, index: 1)
+        encoderSecond.setTexture(effectedTexture1, index: 2)
+        encoderSecond.setBytes(points, length: length, index: 1)
+        threadsPerGroup = MTLSizeMake(width, height, 1)
+        threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
+        encoderSecond.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        encoderSecond.endEncoding()
+        
         // blit encoder
         guard let blitEncoder = commandBuffer.makeBlitCommandEncoder() else {return }
         let origin = MTLOriginMake(0, 0, 0)
         let size = MTLSizeMake(drawable.texture.width, drawable.texture.height, 1)
-        blitEncoder.copy(from: middleTexture, sourceSlice: 0, sourceLevel: 0,
+        blitEncoder.copy(from: composedTexture, sourceSlice: 0, sourceLevel: 0,
                          sourceOrigin: origin, sourceSize: size,
                          to: drawable.texture, destinationSlice: 0,
                          destinationLevel: 0, destinationOrigin: origin)

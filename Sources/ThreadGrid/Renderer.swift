@@ -2,16 +2,18 @@ import MetalKit
 import MetalPerformanceShaders
 
 class Renderer: NSObject {
-    var insectState: MTLComputePipelineState?
-    var firstState: MTLComputePipelineState?
-    var secondState: MTLComputePipelineState?
-    var thirdState: MTLComputePipelineState?
+    let insectState: MTLComputePipelineState
+    let firstState: MTLComputePipelineState
+    let secondState: MTLComputePipelineState
+    var composeState: MTLComputePipelineState?
     let renderPacket: RenderPacket
     var buffer: RowBuffer
     var point: Butterfly
     var insects: Butterflies
-    var texture: MTLTexture!
-    var middleTexture: MTLTexture! 
+    var middleTexture: MTLTexture
+    var effectedTexture1: MTLTexture
+    var effectedTexture2: MTLTexture
+    var composedTexture: MTLTexture
     
     init(metalView: MTKView) {
         renderPacket = RenderPacket()
@@ -19,34 +21,113 @@ class Renderer: NSObject {
         let position: SIMD2<Float> = [100, 50]
         point = Butterfly(id: 0, position: position, velocity: .zero)
         insects = Butterflies(packet: renderPacket)
-        super.init()
-        initializeMetal(metalView: metalView)
-        texture = makeTexture(view: metalView)
-        middleTexture = makeTexture(view: metalView)
-    }
         
-    func initializeMetal(metalView: MTKView) {
         metalView.framebufferOnly = false
         
         let library = renderPacket.library
         let zeroPass = library.makeFunction(name: "insectPass")!
         let firstPass = library.makeFunction(name: "firstPass")!
         let secondPass = library.makeFunction(name: "secondPassLight")!
-        let thirdPass = library.makeFunction(name: "copyTextures")!
+        let composePass = library.makeFunction(name: "copyTextures")!
         insectState = try! renderPacket.device.makeComputePipelineState(function: zeroPass)
         firstState = try! renderPacket.device.makeComputePipelineState(function: firstPass)
         secondState = try! renderPacket.device.makeComputePipelineState(function: secondPass)
-        thirdState = try! renderPacket.device.makeComputePipelineState(function: thirdPass)
+        composeState = try! renderPacket.device.makeComputePipelineState(function: composePass)
+        
+        middleTexture = RendererLights.makeTexture(view: metalView, device: renderPacket.device)!
+        effectedTexture1 = RendererLights.makeTexture(view: metalView, device: renderPacket.device)!
+        effectedTexture2 = RendererLights.makeTexture(view: metalView, device: renderPacket.device)!
+        composedTexture = RendererLights.makeTexture(view: metalView, device: renderPacket.device)!
+        
+        super.init()
     }
-    func makeTexture(view: MTKView) -> MTLTexture? {
+    
+    static func makeTexture(view: MTKView, device: MTLDevice) -> MTLTexture? {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: view.colorPixelFormat, 
                                                                   width: Int(view.bounds.width), 
                                                                   height: Int(view.bounds.height), 
                                                                   mipmapped: false)
         descriptor.usage = [.shaderRead, .shaderWrite]
-        return renderPacket.device.makeTexture(descriptor: descriptor)
+        return device.makeTexture(descriptor: descriptor)
+    }
+    
+}
+
+extension Renderer: MTKViewDelegate {
+    func draw(in view: MTKView) {
+        
+        guard let commandBuffer = renderPacket.commandQueue.makeCommandBuffer(),
+              let commandEncoder = commandBuffer.makeComputeCommandEncoder(),
+              let drawable = view.currentDrawable else {
+            return
+        }
+        // first pass
+        commandEncoder.setComputePipelineState(firstState)
+        commandEncoder.setTexture(drawable.texture, index: 0)
+        let width = firstState.threadExecutionWidth
+        let height = firstState.maxTotalThreadsPerThreadgroup / width
+        var threadsPerGroup = MTLSizeMake(width, height, 1)
+        var threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        
+        // insect pass
+        commandEncoder.setComputePipelineState(insectState)
+        threadsPerGroup = MTLSizeMake(1, 1, 1)
+        threadsPerGrid = MTLSizeMake(insects.count, 1, 1)
+        let points = [point]
+        let length = MemoryLayout<Butterfly>.stride * points.count
+        commandEncoder.setBytes(points, length: length, index: 1)
+        commandEncoder.setBuffer(insects.particleBuffer, offset: 0, index: 0)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        
+        // light pass
+        commandEncoder.setComputePipelineState(secondState)
+        commandEncoder.setTexture(middleTexture, index: 0)
+        threadsPerGroup = MTLSizeMake(width, height, 1)
+        threadsPerGrid = MTLSizeMake(buffer.width, buffer.height, 1)
+        commandEncoder.setBuffer(buffer.buffer, offset: 0, index: 0)
+        commandEncoder.setBytes(points, length: length, index: 1)
+        commandEncoder.setBuffer(insects.particleBuffer, offset: 0, index: 2)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        commandEncoder.endEncoding()
+        
+        // effects
+        let shader = MPSImageSobel(device: renderPacket.device)
+        shader.encode(commandBuffer: commandBuffer, sourceTexture: middleTexture, destinationTexture: effectedTexture1)
+        let blur = MPSImageGaussianBlur(device: renderPacket.device, sigma: 10)
+        blur.encode(commandBuffer: commandBuffer, sourceTexture: middleTexture, destinationTexture: effectedTexture2)
+        
+        // compose pass
+        guard let encoderSecond = commandBuffer.makeComputeCommandEncoder() else { return }
+        encoderSecond.setComputePipelineState(composeState!)
+        encoderSecond.setTexture(composedTexture, index: 0)
+        encoderSecond.setTexture(effectedTexture2, index: 1)
+        encoderSecond.setTexture(effectedTexture1, index: 2)
+        encoderSecond.setBytes(points, length: length, index: 1)
+        threadsPerGroup = MTLSizeMake(width, height, 1)
+        threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
+        encoderSecond.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        encoderSecond.endEncoding()
+        
+        // blit encoder
+        guard let blitEncoder = commandBuffer.makeBlitCommandEncoder() else {return }
+        let origin = MTLOriginMake(0, 0, 0)
+        let size = MTLSizeMake(drawable.texture.width, drawable.texture.height, 1)
+        blitEncoder.copy(from: composedTexture, sourceSlice: 0, sourceLevel: 0,
+                         sourceOrigin: origin, sourceSize: size,
+                         to: drawable.texture, destinationSlice: 0,
+                         destinationLevel: 0, destinationOrigin: origin)
+        blitEncoder.endEncoding()
+        
+        commandBuffer.present(drawable)
+        commandBuffer.commit()
         
     }
+    
+    public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+}
+
+extension Renderer {
     func part() {
         buffer.fullPartition()
     }
@@ -67,70 +148,4 @@ class Renderer: NSObject {
             self.point = last
         }
     }
-}
-
-extension Renderer: MTKViewDelegate {
-    func draw(in view: MTKView) {
-        
-        guard let commandBuffer = renderPacket.commandQueue.makeCommandBuffer(),
-              let commandEncoder = commandBuffer.makeComputeCommandEncoder(),
-              let drawable = view.currentDrawable else {
-            return
-        }
-        // first pass
-        commandEncoder.setComputePipelineState(firstState!)
-        commandEncoder.setTexture(drawable.texture, index: 0)
-        let width = firstState!.threadExecutionWidth
-        let height = firstState!.maxTotalThreadsPerThreadgroup / width
-        var threadsPerGroup = MTLSizeMake(width, height, 1)
-        var threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
-        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-        
-        // insect pass
-        commandEncoder.setComputePipelineState(insectState!)
-        threadsPerGroup = MTLSizeMake(1, 1, 1)
-        threadsPerGrid = MTLSizeMake(insects.count, 1, 1)
-        let points = [point]
-        let length = MemoryLayout<Butterfly>.stride * points.count
-        commandEncoder.setBytes(points, length: length, index: 1)
-        commandEncoder.setBuffer(insects.particleBuffer, offset: 0, index: 0)
-        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-        
-        // light pass
-        commandEncoder.setComputePipelineState(secondState!)
-        commandEncoder.setTexture(middleTexture, index: 0)
-        threadsPerGroup = MTLSizeMake(1, 1, 1)
-        threadsPerGrid = MTLSizeMake(buffer.width, buffer.height, 1)
-        commandEncoder.setBuffer(buffer.buffer, offset: 0, index: 0)
-        commandEncoder.setBytes(points, length: length, index: 1)
-        commandEncoder.setBuffer(insects.particleBuffer, offset: 0, index: 2)
-        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-        commandEncoder.endEncoding()
-        
-        // effect
- //       let blur = MPSImageGaussianBlur(device: renderPacket.device, sigma: 10)
-//        blur.encode(commandBuffer: commandBuffer, sourceTexture: middleTexture, destinationTexture: texture)
-        let shader = MPSImageSobel(device: renderPacket.device)
-        shader.encode(commandBuffer: commandBuffer, sourceTexture: middleTexture, destinationTexture: texture)
-
-        
-        
-        // compose pass
-        guard let encoderSecond = commandBuffer.makeComputeCommandEncoder() else { return }
-        encoderSecond.setComputePipelineState(thirdState!)
-        encoderSecond.setTexture(drawable.texture, index: 0)
-        encoderSecond.setTexture(texture, index: 1)
-        encoderSecond.setTexture(middleTexture, index: 2)
-        encoderSecond.setBytes(points, length: length, index: 1)
-        threadsPerGroup = MTLSizeMake(width, height, 1)
-        threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
-        encoderSecond.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-        encoderSecond.endEncoding()
-        
-        commandBuffer.present(drawable)
-        commandBuffer.commit()
-        
-    }
-    
-    public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
 }
