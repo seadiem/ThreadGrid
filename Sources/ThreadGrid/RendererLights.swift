@@ -17,7 +17,7 @@ class RendererLights: NSObject {
     var effectedTexture2: MTLTexture
     var composedTexture: MTLTexture
     
-    init(metalView: MTKView) {
+    public init(metalView: MTKView) {
         renderPacket = RenderPacket()
         buffer = RowBuffer(packet: renderPacket)
         let position: SIMD2<Float> = [100, 50]
