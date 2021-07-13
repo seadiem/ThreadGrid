@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "ThreadGrid",
-    platforms: [ .macOS(.v10_15), .iOS(.v9)],
+    platforms: [ .macOS(.v10_15), .iOS(.v11)],
     products: [
         .library(name: "Lights", targets: ["ThreadGrid"]),
     ],
