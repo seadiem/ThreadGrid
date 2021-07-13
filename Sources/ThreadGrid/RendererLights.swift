@@ -1,7 +1,7 @@
 import MetalKit
 import MetalPerformanceShaders
 
-class RendererLights: NSObject {
+public class RendererLights: NSObject {
 
     var point: Butterfly
     var insects: Butterflies
@@ -56,7 +56,7 @@ class RendererLights: NSObject {
 }
 
 extension RendererLights: MTKViewDelegate {
-    func draw(in view: MTKView) {
+    public func draw(in view: MTKView) {
         
         guard let commandBuffer = renderPacket.commandQueue.makeCommandBuffer(),
               let commandEncoder = commandBuffer.makeComputeCommandEncoder(),
