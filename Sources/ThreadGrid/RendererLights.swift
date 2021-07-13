@@ -113,7 +113,7 @@ extension RendererLights: MTKViewDelegate {
         threadsPerGroup = MTLSizeMake(width, height, 1)
         threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
 //        encoderSecond.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-        encoderSecond.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        encoderSecond.dispatchThreadgroups(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         encoderSecond.endEncoding()
         
         // blit encoder
