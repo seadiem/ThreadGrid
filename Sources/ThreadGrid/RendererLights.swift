@@ -106,7 +106,7 @@ extension RendererLights: MTKViewDelegate {
         // compose pass
         guard let encoderSecond = commandBuffer.makeComputeCommandEncoder() else { return }
         encoderSecond.setComputePipelineState(composeState!)
-        encoderSecond.setTexture(composedTexture, index: 0)
+        encoderSecond.setTexture(drawable.texture, index: 0)
         encoderSecond.setTexture(effectedTexture2, index: 1)
         encoderSecond.setTexture(effectedTexture1, index: 2)
         encoderSecond.setBytes(points, length: length, index: 1)
@@ -116,15 +116,15 @@ extension RendererLights: MTKViewDelegate {
         encoderSecond.dispatchThreadgroups(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         encoderSecond.endEncoding()
         
-        // blit encoder
-        guard let blitEncoder = commandBuffer.makeBlitCommandEncoder() else {return }
-        let origin = MTLOriginMake(0, 0, 0)
-        let size = MTLSizeMake(drawable.texture.width, drawable.texture.height, 1)
-        blitEncoder.copy(from: composedTexture, sourceSlice: 0, sourceLevel: 0,
-                         sourceOrigin: origin, sourceSize: size,
-                         to: drawable.texture, destinationSlice: 0,
-                         destinationLevel: 0, destinationOrigin: origin)
-        blitEncoder.endEncoding()
+//        // blit encoder
+//        guard let blitEncoder = commandBuffer.makeBlitCommandEncoder() else {return }
+//        let origin = MTLOriginMake(0, 0, 0)
+//        let size = MTLSizeMake(drawable.texture.width, drawable.texture.height, 1)
+//        blitEncoder.copy(from: composedTexture, sourceSlice: 0, sourceLevel: 0,
+//                         sourceOrigin: origin, sourceSize: size,
+//                         to: drawable.texture, destinationSlice: 0,
+//                         destinationLevel: 0, destinationOrigin: origin)
+//        blitEncoder.endEncoding()
         
         commandBuffer.present(drawable)
         commandBuffer.commit()
