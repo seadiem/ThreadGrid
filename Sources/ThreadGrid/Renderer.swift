@@ -150,4 +150,7 @@ extension Renderer {
             self.point = last
         }
     }
+    func set(point: SIMD2<Float>) {
+        self.point.position = point
+    }
 }

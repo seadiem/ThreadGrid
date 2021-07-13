@@ -31,7 +31,7 @@ public struct Setup {
 
             
             canvas.mousedrug = { point in
-                renderer.point.position = [Float(point.x), -Float(point.y) + 200]
+                renderer.set(point: [Float(point.x), -Float(point.y) + 200])
                 metalView.setNeedsDisplay(canvas.bounds)
             }
             

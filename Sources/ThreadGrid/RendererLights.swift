@@ -128,3 +128,9 @@ extension RendererLights: MTKViewDelegate {
     
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
 }
+
+public extension RendererLights {
+    func set(point: SIMD2<Float>) {
+        self.point.position = point
+    }
+}
