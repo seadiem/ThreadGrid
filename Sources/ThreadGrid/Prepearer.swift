@@ -25,7 +25,7 @@ public struct Setup {
             canvas.addSubview(metalView)
             let defaultDevice = MTLCreateSystemDefaultDevice()!
             metalView.device = defaultDevice
-            let renderer = Renderer(metalView: metalView)
+            let renderer = RendererLights(metalView: metalView)
             metalView.delegate = renderer
 
             
@@ -35,39 +35,12 @@ public struct Setup {
             }
             
             canvas.mousedown = { point in
-                renderer.select(at: [Float(point.x), -Float(point.y) + 200])
+  //              renderer.select(at: [Float(point.x), -Float(point.y) + 200])
                 metalView.setNeedsDisplay(canvas.bounds)
             }
                         
             defer {
-                DispatchQueue.global().async {
-                    var command = ""
-                    while command != "end" {
-                        print("input command:")
-                        guard let line = readLine() else { continue }
-                        switch line {
-                        case "sort":
-                            DispatchQueue.main.async {
-                                renderer.sort()
-                                metalView.setNeedsDisplay(canvas.bounds)
-                            }
-                        case "part":
-                            DispatchQueue.main.async {
-                                renderer.part()
-                                metalView.setNeedsDisplay(canvas.bounds)
-                            }
-                        case "shuf":
-                            DispatchQueue.main.async {
-                                renderer.shuffle()
-                                metalView.setNeedsDisplay(canvas.bounds)
-                            }
-                        default: break
-                        }
-                        command = line
-                        print("command: \(command)")
-                    }
-                    print("end commands")
-                }
+                command(renderer: renderer, metalView: metalView, canvas: canvas)
             }
             
             return ([canvas], [], [], [1])
@@ -81,4 +54,36 @@ public struct Setup {
         let packet = ControllerPacket(initialClosure: initialdraw, systemCallClosure: system)
         return packet
     }
+    
+    func command(renderer: RendererLights, metalView: MTKView, canvas: NSView) {
+        DispatchQueue.global().async {
+            var command = ""
+            while command != "end" {
+                print("input command:")
+                guard let line = readLine() else { continue }
+                switch line {
+                case "sort":
+                    DispatchQueue.main.async {
+ //                       renderer.sort()
+                        metalView.setNeedsDisplay(canvas.bounds)
+                    }
+                case "part":
+                    DispatchQueue.main.async {
+  //                      renderer.part()
+                        metalView.setNeedsDisplay(canvas.bounds)
+                    }
+                case "shuf":
+                    DispatchQueue.main.async {
+   //                     renderer.shuffle()
+                        metalView.setNeedsDisplay(canvas.bounds)
+                    }
+                default: break
+                }
+                command = line
+                print("command: \(command)")
+            }
+            print("end commands")
+        }
+    }
+    
 }
