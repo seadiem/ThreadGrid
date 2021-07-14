@@ -26,7 +26,7 @@ public struct Setup {
             canvas.addSubview(metalView)
             let defaultDevice = MTLCreateSystemDefaultDevice()!
             metalView.device = defaultDevice
-            let renderer = RendererLights(metalView: metalView)
+            let renderer = RendererFluids(metalView: metalView)
             metalView.delegate = renderer
 
             
@@ -56,7 +56,7 @@ public struct Setup {
         return packet
     }
     
-    func command(renderer: RendererLights, metalView: MTKView, canvas: NSView) {
+    func command(renderer: RendererFluids, metalView: MTKView, canvas: NSView) {
         DispatchQueue.global().async {
             var command = ""
             while command != "end" {

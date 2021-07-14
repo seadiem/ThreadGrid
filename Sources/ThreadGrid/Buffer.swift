@@ -7,6 +7,7 @@ struct RowBuffer {
     let height = 300
     var rows: [[BufferColor]]
     var buffer: MTLBuffer { RowBuffer.buffer! }
+    let count: Int
     init(packet: RenderPacket) {
         var rows = [[BufferColor]]()
         for index in 0..<height {
@@ -18,6 +19,7 @@ struct RowBuffer {
         self.rows = rows
         let array = rows.reduce([BufferColor]()) { $0 + $1 }.map { $0.color }
         let length = MemoryLayout<SIMD4<Float>>.stride * array.count
+        count = array.count
         RowBuffer.buffer = packet.device.makeBuffer(bytes: array, length: length, options: .cpuCacheModeWriteCombined)!
     }
     mutating func rotate() {
