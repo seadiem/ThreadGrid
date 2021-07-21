@@ -46,6 +46,9 @@ struct MoveBuffer {
             }
             return current
         }
+        var plainarray: [Pixel] {
+            pixels.reduce(into: [Pixel]()) { $0 += $1 }
+        }
     }
     
     
@@ -55,7 +58,8 @@ struct MoveBuffer {
     init(packet: RenderPacket) {
         let pixels = Array(repeating: Pixel(velocity: .one, color: .one), count: width)
         let rows = Rows(pixels: Array(repeating: pixels, count: height))
-        mtlbuffer = packet.device.makeBuffer(bytes: rows.pixels, length: rows.length, options: .cpuCacheModeWriteCombined)!
+//        mtlbuffer = packet.device.makeBuffer(bytes: rows.pixels, length: rows.length, options: .cpuCacheModeWriteCombined)!
+        mtlbuffer = packet.device.makeBuffer(bytes: rows.plainarray, length: rows.length, options: .cpuCacheModeWriteCombined)!
     }
     func unbind() -> [Pixel] {
         let result = mtlbuffer.contents().bindMemory(to: Pixel.self, capacity: height * width)
