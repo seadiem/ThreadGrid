@@ -17,7 +17,11 @@ struct RenderPacket {
         let folder = try! Folder(path: path)
         var shader = ""
         for file in folder.files {
-            guard file.name == "Grid1.metal" || file.name == "Fluids.metal" else { continue }
+            guard file.name == "Grid1.metal" || 
+                    file.name == "Fluids.metal" || 
+                    file.name == "Move.metal" ||
+                    file.name == "Advection.metal"
+            else { continue }
             guard let content = try? file.readAsString() else { continue }
             shader += content
         }

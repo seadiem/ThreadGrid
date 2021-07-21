@@ -1,6 +1,72 @@
 import Metal
 import Algorithms
 
+
+
+struct PixelBuffer {
+    let mtlbuffer: MTLBuffer
+    let width = 40
+    init(packet: RenderPacket) {
+        let pixel = MoveBuffer.Pixel(velocity: .one, color: .one)
+        let pixels = Array(repeating: pixel, count: width)
+        mtlbuffer = packet.device.makeBuffer(bytes: pixels, length: pixel.length * pixels.count, options: .cpuCacheModeWriteCombined)!
+    }
+    func unbind() -> [MoveBuffer.Pixel] {
+        let result = mtlbuffer.contents().bindMemory(to: MoveBuffer.Pixel.self, capacity: width)
+        var pixels = Array(repeating: MoveBuffer.Pixel(velocity: .one, color: .one), count: width)
+        for i in 0 ..< width { 
+            pixels[i] = result[i]
+        }
+        return pixels
+    }
+}
+
+struct MoveBuffer {
+    
+    struct Pixel {
+        
+        var ids: (UInt32, UInt32, UInt32, UInt32, UInt32) = (1, 2, 3, 4, 5)
+        let velocity: SIMD2<Float>
+        let color: SIMD4<Float>
+        
+        var length: Int { MemoryLayout<Pixel>.stride }
+        mutating func check() {
+            ids.1 = 2
+        }
+    }
+    
+    struct Rows {
+        let pixels: [[Pixel]]
+        var length: Int {
+            var current = 0
+            for row in pixels {
+                for pixel in row {
+                    current += pixel.length
+                }
+            }
+            return current
+        }
+    }
+    
+    
+    let mtlbuffer: MTLBuffer
+    let width = 40
+    let height = 30
+    init(packet: RenderPacket) {
+        let pixels = Array(repeating: Pixel(velocity: .one, color: .one), count: width)
+        let rows = Rows(pixels: Array(repeating: pixels, count: height))
+        mtlbuffer = packet.device.makeBuffer(bytes: rows.pixels, length: rows.length, options: .cpuCacheModeWriteCombined)!
+    }
+    func unbind() -> [Pixel] {
+        let result = mtlbuffer.contents().bindMemory(to: Pixel.self, capacity: height * width)
+        var pixels = Array(repeating: Pixel(velocity: .one, color: .one), count: width * height)
+        for i in 0..<height * width { 
+            pixels[i] = result[i]
+        }
+        return pixels
+    }
+}
+
 struct RowBuffer {
     static var buffer: MTLBuffer?
     let width = 400

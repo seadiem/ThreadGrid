@@ -113,10 +113,19 @@ extension RendererLights: MTKViewDelegate {
         encoderSecond.endEncoding()
         
         // blit encoder
+//        guard let blitEncoder = commandBuffer.makeBlitCommandEncoder() else {return }
+//        let origin = MTLOriginMake(0, 0, 0)
+//        let size = MTLSizeMake(drawable.texture.width, drawable.texture.height, 1)
+//        blitEncoder.copy(from: composedTexture, sourceSlice: 0, sourceLevel: 0,
+//                         sourceOrigin: origin, sourceSize: size,
+//                         to: drawable.texture, destinationSlice: 0,
+//                         destinationLevel: 0, destinationOrigin: origin)
+//        blitEncoder.endEncoding()
+        
         guard let blitEncoder = commandBuffer.makeBlitCommandEncoder() else {return }
         let origin = MTLOriginMake(0, 0, 0)
         let size = MTLSizeMake(drawable.texture.width, drawable.texture.height, 1)
-        blitEncoder.copy(from: composedTexture, sourceSlice: 0, sourceLevel: 0,
+        blitEncoder.copy(from: middleTexture, sourceSlice: 0, sourceLevel: 0,
                          sourceOrigin: origin, sourceSize: size,
                          to: drawable.texture, destinationSlice: 0,
                          destinationLevel: 0, destinationOrigin: origin)
@@ -133,5 +142,10 @@ extension RendererLights: MTKViewDelegate {
 public extension RendererLights {
     func set(point: SIMD2<Float>) {
         self.point.position = point
+    }
+    func select(at point: SIMD2<Float>) {
+        if let last = insects.select(at: point, current: self.point) {
+            self.point = last
+        }
     }
 }
