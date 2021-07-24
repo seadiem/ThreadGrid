@@ -20,7 +20,8 @@ struct RenderPacket {
             guard file.name == "Grid1.metal" || 
                     file.name == "Fluids.metal" || 
                     file.name == "Move.metal" ||
-                    file.name == "Advection.metal"
+                    file.name == "Advection.metal" ||
+                    file.name == "Debug.metal"
             else { continue }
             guard let content = try? file.readAsString() else { continue }
             shader += content
