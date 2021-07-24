@@ -14,15 +14,17 @@ struct DebugCell: CustomStringConvertible, EmptyInit, LengthSupplier {
 }
 
 struct ThreadGrid<Cell: EmptyInit & LengthSupplier> {
-    let width: Int = 8
-    let height: Int = 3
-    var size: Int { width * height }
+    let width: Int
+    let height: Int
+    let size: Int
     var columns: [[Cell]]
     let buffer: MTLBuffer
     var tempStorage: Array<Cell>
     var plainarray: [Cell] { columns.reduce(into: [Cell]()) { $0 += $1 } }
-    init(device: MTLDevice) {
-        let size = width * height
+    init(device: MTLDevice, width: Int, height: Int) {
+        self.width = width
+        self.height = height
+        size = width * height
         columns = Array(repeating: Array(repeating: Cell(), count: height), count: width)
         buffer = device.makeBuffer(length: size * Cell.length, options: .storageModeShared)!
         tempStorage = Array(repeating: Cell(), count: size)
@@ -46,7 +48,7 @@ struct DebugFridge {
     var width: Int { grid.width }
     var height: Int { grid.height }
     init(packet: RenderPacket) {
-        grid = ThreadGrid(device: packet.device)
+        grid = ThreadGrid(device: packet.device, width: 8, height: 3)
     }
     mutating func further() {
     }

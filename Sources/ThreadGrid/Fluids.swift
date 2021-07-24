@@ -1,7 +1,7 @@
 import Metal
+import Induction
 
-struct FluidCell: CustomStringConvertible {
-    static var zero: FluidCell { FluidCell(velocity: .zero, density: 0) }
+struct FluidCell: CustomStringConvertible, EmptyInit, LengthSupplier {
     static var length: Int { MemoryLayout<FluidCell>.stride }
     let temp: SIMD2<Float> = .zero
     var velocity: SIMD2<Float>
@@ -14,31 +14,10 @@ struct FluidCell: CustomStringConvertible {
     var description: String { String(char) }
 //    var description: String { "[\(velocity.x), \(velocity.y)]" }
 //    var description: String { "[\(density)]" }
-}
-
-struct FluidGrid {
-    static let width: Int = 10
-    static let height: Int = 5
-    static var size: Int { width * height }
-    var rows: [[FluidCell]]
-    let buffer: MTLBuffer
-    var tempStorage = Array(repeating: FluidCell.zero, count: FluidGrid.size)
-    var plainarray: [FluidCell] { rows.reduce(into: [FluidCell]()) { $0 += $1 } }
-    init(device: MTLDevice) {
-        rows = Array(repeating: Array(repeating: FluidCell.zero, count: FluidGrid.width), count: FluidGrid.height)
-        buffer = device.makeBuffer(length: FluidGrid.size * FluidCell.length, options: .storageModeShared)!
-        fillBuffer()
-    }
-    func fillBuffer() {
-        buffer.contents().copyMemory(from: plainarray, byteCount: FluidGrid.size * FluidCell.length)
-    }
-    mutating func unbind() {        
-        let result = buffer.contents().bindMemory(to: FluidCell.self, capacity: FluidGrid.size)
-        for i in tempStorage.indices { tempStorage[i] = result[i] }
-        rows = tempStorage.chunks(ofCount: FluidGrid.width).map { Array($0) }
-    }
-    func render() {
-        rows.forEach {print($0)}
+    var isEmpty: Bool { false }
+    init() {
+        velocity = .zero
+        density = 0
     }
 }
 
@@ -52,36 +31,27 @@ struct FluidFridge {
             }
         }
     }
-    var black: FluidGrid
-    var white: FluidGrid
+    let width = 8
+    let height = 3
+    var black: ThreadGrid<FluidCell>
+    var white: ThreadGrid<FluidCell>
     var state: State
-    var current: FluidGrid {
+    var current: ThreadGrid<FluidCell> {
         switch state {
         case .black: return black
         case .white: return white
         }
     }
-    var next: FluidGrid {
+    var next: ThreadGrid<FluidCell> {
         switch state {
         case .black: return white
         case .white: return black
         }
     }
     init(packet: RenderPacket) {
-        black = FluidGrid(device: packet.device)
-        white = FluidGrid(device: packet.device)
+        black = ThreadGrid<FluidCell>(device: packet.device, width: width, height: height)
+        white = ThreadGrid<FluidCell>(device: packet.device, width: width, height: height)
         state = .black
-        black.rows[0][0].density = 1.0
-        black.rows = black.rows.map { row in 
-            row.map { cell in
-                var cell = cell
-                cell.velocity = [1, 1]
-                return cell
-            }
-        }
-        black.fillBuffer()
-        white.rows = black.rows
-        white.fillBuffer()
     }
     mutating func further() {
         state.further()
@@ -129,7 +99,7 @@ struct FluidQuickPass {
         let width = state.threadExecutionWidth
         let height = state.maxTotalThreadsPerThreadgroup / width
         let threadsPerGroup = MTLSizeMake(height, height, 1)
-        let threadsPerGrid = MTLSizeMake(FluidGrid.width, FluidGrid.height, 1)
+        let threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         commandEncoder.endEncoding()
         commandBuffer.commit()
