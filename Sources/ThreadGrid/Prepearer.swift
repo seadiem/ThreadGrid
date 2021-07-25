@@ -20,23 +20,22 @@ public struct Setup {
             
             
             let metalView = MTKView(frame: CGRect(x: 0, y: 0, width: 300, height: 200))
-            metalView.preferredFramesPerSecond = 60
             metalView.enableSetNeedsDisplay = true
             metalView.isPaused = true
             canvas.addSubview(metalView)
             let defaultDevice = MTLCreateSystemDefaultDevice()!
             metalView.device = defaultDevice
-            let renderer = RendererLights(metalView: metalView)
+            let renderer = Renderer(metalView: metalView)
             metalView.delegate = renderer
 
             
             canvas.mousedrug = { point in
-                renderer.set(point: [Float(point.x), -Float(point.y) + 200])
+  //              renderer.set(point: [Float(point.x), -Float(point.y) + 200])
                 metalView.setNeedsDisplay(canvas.bounds)
             }
             
             canvas.mousedown = { point in
-                renderer.select(at: [Float(point.x), -Float(point.y) + 200])
+//                renderer.select(at: [Float(point.x), -Float(point.y) + 200])
                 metalView.setNeedsDisplay(canvas.bounds)
             }
                         
@@ -56,7 +55,7 @@ public struct Setup {
         return packet
     }
     
-    func command(renderer: RendererLights, metalView: MTKView, canvas: NSView) {
+    func command(renderer: Renderer, metalView: MTKView, canvas: NSView) {
         DispatchQueue.global().async {
             var command = ""
             while command != "end" {
@@ -65,7 +64,7 @@ public struct Setup {
                 switch line {
                 case "sort":
                     DispatchQueue.main.async {
- //                       renderer.sort()
+ //f                       renderer.sort()
                         metalView.setNeedsDisplay(canvas.bounds)
                     }
                 case "part":

@@ -9,7 +9,7 @@ public struct TestThreadGrid {
 
 struct TestQuickPass {
     func run() {
-        debug()
+        fluid()
     }
     func reshape() {
         TestReshape().run()
@@ -21,7 +21,6 @@ struct TestQuickPass {
     }
     func fluid() {
         var pass = FluidQuickPass()
-        pass.fridge.noPassRender()
         while let _ = readLine() {
             pass.pass()
             pass.render()

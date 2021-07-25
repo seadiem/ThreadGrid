@@ -13,11 +13,18 @@ struct FluidCell: CustomStringConvertible, EmptyInit, LengthSupplier {
 //    var description: String { "[\(temp.x), \(temp.y)]" }
     var description: String { String(char) }
 //    var description: String { "[\(velocity.x), \(velocity.y)]" }
-//    var description: String { "[\(density)]" }
+//    var description: String { 
+//        var out = "" 
+//        if "\(density)".count == 3 {
+//            out = "0"
+//        }
+//        out = "\(density)" + out
+//        return out
+//    }
     var isEmpty: Bool { false }
     init() {
-        velocity = .zero
-        density = 0
+        velocity = [1, 1]
+        density = 0.0
     }
 }
 
@@ -31,8 +38,8 @@ struct FluidFridge {
             }
         }
     }
-    let width = 8
-    let height = 3
+    let width = 20
+    let height = 20
     var black: ThreadGrid<FluidCell>
     var white: ThreadGrid<FluidCell>
     var state: State
@@ -52,6 +59,12 @@ struct FluidFridge {
         black = ThreadGrid<FluidCell>(device: packet.device, width: width, height: height)
         white = ThreadGrid<FluidCell>(device: packet.device, width: width, height: height)
         state = .black
+        black.columns[2][2].density = 1.0
+        black.columns[2][3].density = 1.0
+        black.columns[3][2].density = 1.0
+        black.columns[3][3].density = 1.0
+        black.fillBuffer()
+        black.render()
     }
     mutating func further() {
         state.further()
@@ -62,21 +75,105 @@ struct FluidFridge {
     }
     func render() {
         next.render()
-//        print("black")
-//        black.render()
-//        print("white")
-//        white.render()
+    }
+    func renderBlackWhite() {
+        print("black")
+        black.render()
+        print("white")
+        white.render()
     }
 }
+
 import MetalKit
 class AdvectRenderer: NSObject, MTKViewDelegate  {
+    
     let renderPacket: RenderPacket
+    var fridge: FluidFridge
+    var texture: MTLTexture
+    
+    let zeroState: MTLComputePipelineState
+    let firstState: MTLComputePipelineState
+    let lastState: MTLComputePipelineState
+    
     public init(metalView: MTKView) {
         renderPacket = RenderPacket()
+        fridge = FluidFridge(packet: renderPacket)
+        texture = AdvectRenderer.makeTexture(view: metalView, 
+                                             size: [fridge.width, fridge.height], 
+                                             device: renderPacket.device, scale: 4)!
+        metalView.framebufferOnly = false
+        var function = renderPacket.library.makeFunction(name: "fillTextureToDark")!
+        zeroState = try! renderPacket.device.makeComputePipelineState(function: function)
+        function = renderPacket.library.makeFunction(name: "moveCells")!
+        firstState = try! renderPacket.device.makeComputePipelineState(function: function)
+        function = renderPacket.library.makeFunction(name: "fillTexture")!
+        lastState = try! renderPacket.device.makeComputePipelineState(function: function)
         super.init()
     }
+    deinit {
+        print("deinit")
+    }
+    func sort() {
+        print("sort")
+    }
+    static func makeTexture(view: MTKView, size: SIMD2<Int>, device: MTLDevice, scale: Int) -> MTLTexture? {
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: view.colorPixelFormat, 
+                                                                  width: size.x * scale, 
+                                                                  height: size.y * scale, 
+                                                                  mipmapped: false)
+        descriptor.usage = [.shaderRead, .shaderWrite]
+        return device.makeTexture(descriptor: descriptor)
+    }
+    public func draw(in view: MTKView) {
+        
+        print("drawing")
+        
+        guard let commandBuffer = renderPacket.commandQueue.makeCommandBuffer(),
+              let commandEncoder = commandBuffer.makeComputeCommandEncoder(),
+              let drawable = view.currentDrawable else {
+            return
+        }
+        
+        
+        let width = firstState.threadExecutionWidth
+        let height = firstState.maxTotalThreadsPerThreadgroup / width
+        var threadsPerGroup = MTLSizeMake(width, height, 1)
+        var threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
+        
+        
+       
+        commandEncoder.setComputePipelineState(zeroState)
+        commandEncoder.setTexture(drawable.texture, index: 0)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        
+//        commandEncoder.setComputePipelineState(firstState)
+//        commandEncoder.setBuffer(fridge.current.buffer, offset: 0, index: 0)
+//        commandEncoder.setBuffer(fridge.next.buffer, offset: 0, index: 1)
+//        threadsPerGroup = MTLSizeMake(height, height, 1)
+//        threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
+//        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+//        
+//        commandEncoder.setComputePipelineState(lastState)
+//        commandEncoder.setBuffer(fridge.next.buffer, offset: 0, index: 0)
+//        commandEncoder.setTexture(texture, index: 0)
+//        threadsPerGroup = MTLSizeMake(width, height, 1)
+//        threadsPerGrid = MTLSizeMake(texture.width, texture.height, 1)
+//        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        commandEncoder.endEncoding()
+        
+//        guard let blitEncoder = commandBuffer.makeBlitCommandEncoder() else {return }
+//        let origin = MTLOriginMake(0, 0, 0)
+//        let size = MTLSizeMake(texture.width, texture.height, 1)
+//        blitEncoder.copy(from: texture, sourceSlice: 0, sourceLevel: 0,
+//                         sourceOrigin: origin, sourceSize: size,
+//                         to: drawable.texture, destinationSlice: 0,
+//                         destinationLevel: 0, destinationOrigin: origin)
+//        blitEncoder.endEncoding()
+        commandBuffer.commit()
+                
+        fridge.further()
+    }
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
-    public func draw(in view: MTKView) {}
 }
 
 struct FluidQuickPass {
