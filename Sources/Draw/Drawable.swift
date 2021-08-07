@@ -1,7 +1,7 @@
 import CoreGraphics
 
 
-public protocol Renderer {
+public protocol Renderer2D {
     
     func draw(color: Color, in rect: CGRect)
     func move(to point: CGPoint)
@@ -23,5 +23,5 @@ public protocol Renderer {
 }
 
 public protocol Drawable {
-    func draw(into renderer: Renderer)
+    func draw(into renderer: Renderer2D)
 }

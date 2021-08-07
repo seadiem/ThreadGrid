@@ -20,25 +20,31 @@ public struct Setup {
             
             
             let metalView = MTKView(frame: CGRect(x: 0, y: 0, width: 300, height: 200))
+            metalView.preferredFramesPerSecond = 60
             metalView.enableSetNeedsDisplay = true
             metalView.isPaused = true
             canvas.addSubview(metalView)
             let defaultDevice = MTLCreateSystemDefaultDevice()!
             metalView.device = defaultDevice
-            let renderer = Renderer(metalView: metalView)
+            let renderer = AdvectRenderer(metalView: metalView)
             metalView.delegate = renderer
-
+            
+            var joystick = Joystick(center: [350, 250])
+            canvas.setDrawables([joystick])
             
             canvas.mousedrug = { point in
-  //              renderer.set(point: [Float(point.x), -Float(point.y) + 200])
-                metalView.setNeedsDisplay(canvas.bounds)
+//                renderer.set(point: [Float(point.x), -Float(point.y) + 200])
+//                metalView.setNeedsDisplay(canvas.bounds)
+//                joystick.touch(at: [Double(point.x), Double(point.y)])
+//                canvas.setDrawables([joystick])
             }
             
             canvas.mousedown = { point in
-//                renderer.select(at: [Float(point.x), -Float(point.y) + 200])
+                //              renderer.select(at: [Float(point.x), -Float(point.y) + 200])
+                renderer.set(point: [Float(point.x), -Float(point.y) + 200])
                 metalView.setNeedsDisplay(canvas.bounds)
             }
-                        
+            
             defer {
                 command(renderer: renderer, metalView: metalView, canvas: canvas)
             }
@@ -55,7 +61,7 @@ public struct Setup {
         return packet
     }
     
-    func command(renderer: Renderer, metalView: MTKView, canvas: NSView) {
+    func command(renderer: AdvectRenderer, metalView: MTKView, canvas: NSView) {
         DispatchQueue.global().async {
             var command = ""
             while command != "end" {
@@ -64,17 +70,17 @@ public struct Setup {
                 switch line {
                 case "sort":
                     DispatchQueue.main.async {
- //f                       renderer.sort()
+                        //                       renderer.sort()
                         metalView.setNeedsDisplay(canvas.bounds)
                     }
                 case "part":
                     DispatchQueue.main.async {
-  //                      renderer.part()
+                        //                      renderer.part()
                         metalView.setNeedsDisplay(canvas.bounds)
                     }
                 case "shuf":
                     DispatchQueue.main.async {
-   //                     renderer.shuffle()
+                        //                     renderer.shuffle()
                         metalView.setNeedsDisplay(canvas.bounds)
                     }
                 default: break

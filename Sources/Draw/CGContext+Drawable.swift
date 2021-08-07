@@ -111,7 +111,7 @@ public extension CGContext {
     
 }
 
-extension CGContext: Renderer {
+extension CGContext: Renderer2D {
 //    
 //    public func draw(text: String, at point: CGPoint, fontsize: Int) {
 //    }

@@ -3,7 +3,8 @@ public struct TestThreadGrid {
     public func run() {
 //        TestPixel().run()
 //        TestFridge().run()
-        TestQuickPass().run()
+//        TestQuickPass().run()
+        CheckSimd().run()
     }
 }
 
@@ -26,5 +27,13 @@ struct TestQuickPass {
             pass.render()
             pass.further()    
         }
+    }
+}
+
+struct CheckSimd {
+    func run() {
+        let a: SIMD2<Int> = [0, 0] 
+        let b = a &+ 1
+        print(b)
     }
 }

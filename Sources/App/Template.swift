@@ -20,7 +20,7 @@ struct Template {
         init() {
 //            triangel = Triangel()
         }
-        func draw(into renderer: Renderer) {
+        func draw(into renderer: Renderer2D) {
  //           triangel.draw(into: renderer)
         }
     } 
