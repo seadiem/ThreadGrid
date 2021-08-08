@@ -26,22 +26,21 @@ public struct Setup {
             canvas.addSubview(metalView)
             let defaultDevice = MTLCreateSystemDefaultDevice()!
             metalView.device = defaultDevice
-            let renderer = AdvectRenderer(metalView: metalView)
+            let renderer = AdvectRendererOne(metalView: metalView)
             metalView.delegate = renderer
             
             var joystick = Joystick(center: [350, 250])
             canvas.setDrawables([joystick])
             
             canvas.mousedrug = { point in
-//                renderer.set(point: [Float(point.x), -Float(point.y) + 200])
-//                metalView.setNeedsDisplay(canvas.bounds)
-//                joystick.touch(at: [Double(point.x), Double(point.y)])
-//                canvas.setDrawables([joystick])
+                renderer.set(point: [Float(point.x), -Float(point.y) + 200])
+ //               metalView.setNeedsDisplay(canvas.bounds)
+                joystick.touch(at: [Double(point.x), Double(point.y)])
+                canvas.setDrawables([joystick])
             }
             
             canvas.mousedown = { point in
-                //              renderer.select(at: [Float(point.x), -Float(point.y) + 200])
-                renderer.set(point: [Float(point.x), -Float(point.y) + 200])
+ //               renderer.set(point: [Float(point.x), -Float(point.y) + 200])
                 metalView.setNeedsDisplay(canvas.bounds)
             }
             
@@ -61,13 +60,22 @@ public struct Setup {
         return packet
     }
     
-    func command(renderer: AdvectRenderer, metalView: MTKView, canvas: NSView) {
+    func command(renderer: AdvectRendererOne, metalView: MTKView, canvas: NSView) {
         DispatchQueue.global().async {
             var command = ""
             while command != "end" {
                 print("input command:")
                 guard let line = readLine() else { continue }
                 switch line {
+                case "force": 
+                    print("input force 'X:Y'")
+                    if let f = readLine() {
+                        DispatchQueue.main.async {
+                            let s = f.split(separator: ":")
+                            guard s.count == 2, let x = Float(s.first!), let y = Float(s.last!) else { return }
+                            renderer.pass(forceX: x, forceY: y)
+                        }
+                    }
                 case "sort":
                     DispatchQueue.main.async {
                         //                       renderer.sort()

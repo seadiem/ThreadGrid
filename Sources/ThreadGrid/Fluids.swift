@@ -3,16 +3,18 @@ import Induction
 
 struct FluidCell: CustomStringConvertible, EmptyInit, LengthSupplier {
     static var length: Int { MemoryLayout<FluidCell>.stride }
-    let temp: SIMD2<Float> = .zero
-    var velocity: SIMD2<Float>
     var density: Float
+    var velocity: SIMD2<Float>
+    let temp: SIMD2<Float> = .zero
     var char: Character {
         if density > 0.5 { return "◼︎" }
         else { return "◻︎" }
     }
 //    var description: String { "[\(temp.x), \(temp.y)]" }
 //    var description: String { String(char) }
-    var description: String { "[\(velocity.x), \(velocity.y)]" }
+//    var description: String { "[\(temp.x),\(temp.y)]" }
+//    var description: String { "[\(velocity.x),\(velocity.y)]" }
+    var description: String { "[\(velocity.x),\(velocity.y); \(char)]" }
 //    var description: String { 
 //        var out = "" 
 //        if "\(density)".count == 3 {
@@ -23,8 +25,8 @@ struct FluidCell: CustomStringConvertible, EmptyInit, LengthSupplier {
 //    }
     var isEmpty: Bool { false }
     init() {
-        velocity = [1.0, 0.0]
-        density = 0.1
+        velocity = [1.0, 1.0]
+        density = 0.0
     }
 }
 
@@ -38,8 +40,8 @@ struct FluidFridge {
             }
         }
     }
-    let width = 90
-    let height = 90
+    let width = 9
+    let height = 9
     var black: ThreadGrid<FluidCell>
     var white: ThreadGrid<FluidCell>
     var state: State
@@ -59,6 +61,14 @@ struct FluidFridge {
         black = ThreadGrid<FluidCell>(device: packet.device, width: width, height: height)
         white = ThreadGrid<FluidCell>(device: packet.device, width: width, height: height)
         state = .black
+        touchSpot()
+//        touchBigSpot()
+    }
+    mutating func touchSpot() {
+        black.columns[1][0].density = 1.0
+        black.fillBuffer()
+    }
+    mutating func touchBigSpot() {
         black.columns[2][2].density = 1.0
         black.columns[2][3].density = 1.0
         black.columns[2][4].density = 1.0
@@ -84,10 +94,12 @@ struct FluidFridge {
         black.unbind()
         black.render()
     }
-    func renderBlackWhite() {
+    mutating func renderBlackWhite() {
         print("black")
+        black.unbind()
         black.render()
         print("white")
+        white.unbind()
         white.render()
     }
 }
@@ -158,6 +170,17 @@ class AdvectRenderer: NSObject, MTKViewDelegate  {
         commandEncoder.setTexture(drawable.texture, index: 0)
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         
+        commandEncoder.setComputePipelineState(boundState)
+        commandEncoder.setBuffer(fridge.next.buffer, offset: 0, index: 0)
+        threadsPerGroup = MTLSizeMake(width, height, 1)
+        threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        
+        commandEncoder.setComputePipelineState(boundState)
+        commandEncoder.setBuffer(fridge.current.buffer, offset: 0, index: 0)
+        threadsPerGroup = MTLSizeMake(width, height, 1)
+        threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         
         commandEncoder.setComputePipelineState(firstState)
         commandEncoder.setBuffer(fridge.current.buffer, offset: 0, index: 0)
@@ -171,18 +194,6 @@ class AdvectRenderer: NSObject, MTKViewDelegate  {
         commandEncoder.setTexture(texture, index: 0)
         threadsPerGrid = MTLSizeMake(texture.width, texture.height, 1)
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-        
-//        commandEncoder.setComputePipelineState(boundState)
-//        commandEncoder.setBuffer(fridge.next.buffer, offset: 0, index: 0)
-//        threadsPerGroup = MTLSizeMake(width, height, 1)
-//        threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
-//        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-//        
-//        commandEncoder.setComputePipelineState(boundState)
-//        commandEncoder.setBuffer(fridge.current.buffer, offset: 0, index: 0)
-//        threadsPerGroup = MTLSizeMake(width, height, 1)
-//        threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
-//        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         
         commandEncoder.endEncoding()
         
@@ -199,8 +210,8 @@ class AdvectRenderer: NSObject, MTKViewDelegate  {
         commandBuffer.commit()
         commandBuffer.waitUntilCompleted()
         fridge.further()
-//        fridge.renderBlackWhite()
-//        print("-")
+        fridge.renderBlackWhite()
+        print("-")
     }
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
 }
