@@ -21,7 +21,8 @@ struct RenderPacket {
                     file.name == "Fluids.metal" || 
                     file.name == "Move.metal" ||
                     file.name == "Advection.metal" ||
-                    file.name == "Debug.metal"
+                    file.name == "Debug.metal" ||
+                    file.name == "Snake.metal"
             else { continue }
             guard let content = try? file.readAsString() else { continue }
             shader += content

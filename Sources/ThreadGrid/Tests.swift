@@ -5,6 +5,7 @@ public struct TestThreadGrid {
 //        TestFridge().run()
 //        TestQuickPass().run()
 //        CheckSimd().run()
+        Geometry().test()
     }
 }
 

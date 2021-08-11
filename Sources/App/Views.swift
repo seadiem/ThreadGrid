@@ -35,12 +35,12 @@ open class Canvas: NSView {
         mousedown?(localpoint)
     }
     
-    override public var acceptsFirstResponder: Bool { get { return true } }
-    
-    override public func keyDown(with event: NSEvent) {
-        super.keyDown(with: event)
-        keytap?(Int(event.keyCode))
-    }
+//    override public var acceptsFirstResponder: Bool { get { return true } }
+//    
+//    override public func keyDown(with event: NSEvent) {
+//        keytap?(Int(event.keyCode))
+//        super.keyDown(with: event)
+//    }
     
     override public func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)

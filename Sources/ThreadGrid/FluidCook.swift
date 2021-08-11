@@ -4,7 +4,7 @@ import Draw
 import App
 
 @available(OSX 10.11, *)
-public struct Setup {
+public struct FluidCook {
     
     public init() {}
     
@@ -42,6 +42,10 @@ public struct Setup {
             canvas.mousedown = { point in
  //               renderer.set(point: [Float(point.x), -Float(point.y) + 200])
                 metalView.setNeedsDisplay(canvas.bounds)
+            }
+            
+            canvas.keytap = { key in 
+                print("key: \(key)")
             }
             
             defer {

@@ -6,12 +6,6 @@ import Algorithms
 protocol LengthSupplier {
     static var length: Int { get }
 }
-struct DebugCell: CustomStringConvertible, EmptyInit, LengthSupplier {
-    static var length: Int { MemoryLayout<DebugCell>.stride }
-    let info: SIMD4<Float> = [0, 0, 7, 0]
-    var description: String { "[\(info.x),\(info.y)]" }
-    var isEmpty: Bool { false }
-}
 
 struct ThreadGrid<Cell: EmptyInit & LengthSupplier> {
     let width: Int
@@ -41,6 +35,13 @@ struct ThreadGrid<Cell: EmptyInit & LengthSupplier> {
     func render() {
         ColumnsToRows(columns: columns)!.rows.forEach { print($0) }
     }
+}
+
+struct DebugCell: CustomStringConvertible, EmptyInit, LengthSupplier {
+    static var length: Int { MemoryLayout<DebugCell>.stride }
+    let info: SIMD4<Float> = [0, 0, 7, 0]
+    var description: String { "[\(info.x),\(info.y)]" }
+    var isEmpty: Bool { false }
 }
 
 struct DebugFridge {

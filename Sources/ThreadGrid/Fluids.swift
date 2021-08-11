@@ -25,7 +25,7 @@ struct FluidCell: CustomStringConvertible, EmptyInit, LengthSupplier {
 //    }
     var isEmpty: Bool { false }
     init() {
-        velocity = [1.0, 1.0]
+        velocity = [1.0, 0.0]
         density = 0.0
     }
 }
@@ -125,7 +125,7 @@ class AdvectRenderer: NSObject, MTKViewDelegate  {
         metalView.framebufferOnly = false
         var function = renderPacket.library.makeFunction(name: "fillTextureToDark")!
         zeroState = try! renderPacket.device.makeComputePipelineState(function: function)
-        function = renderPacket.library.makeFunction(name: "moveCells")!
+        function = renderPacket.library.makeFunction(name: "advectK1_3")!
         firstState = try! renderPacket.device.makeComputePipelineState(function: function)
         function = renderPacket.library.makeFunction(name: "fillTexture")!
         lastState = try! renderPacket.device.makeComputePipelineState(function: function)
@@ -158,14 +158,11 @@ class AdvectRenderer: NSObject, MTKViewDelegate  {
             return
         }
         
-        
         let width = firstState.threadExecutionWidth
         let height = firstState.maxTotalThreadsPerThreadgroup / width
         var threadsPerGroup = MTLSizeMake(width, height, 1)
         var threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
         
-        
-       
         commandEncoder.setComputePipelineState(zeroState)
         commandEncoder.setTexture(drawable.texture, index: 0)
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
