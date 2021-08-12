@@ -48,7 +48,6 @@ public struct SnakeCook {
                 case 84: renderer.fridge.headDirection = [ 0, 1]
                 case 85: renderer.fridge.headDirection = [ 1, 1]
                 case 86: renderer.fridge.headDirection = [-1, 0]
-                case 87: renderer.fridge.headDirection = [ 0, 0]
                 case 88: renderer.fridge.headDirection = [ 1, 0]
                 case 89: renderer.fridge.headDirection = [-1,-1]
                 case 91: renderer.fridge.headDirection = [ 0,-1]
