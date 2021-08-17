@@ -15,6 +15,7 @@ struct ThreadGrid<Cell: EmptyInit & LengthSupplier> {
     let buffer: MTLBuffer
     var tempStorage: Array<Cell>
     var plainarray: [Cell] { columns.reduce(into: [Cell]()) { $0 += $1 } }
+    var biteSize: Int { size * Cell.length }
     init(device: MTLDevice, width: Int, height: Int) {
         self.width = width
         self.height = height
