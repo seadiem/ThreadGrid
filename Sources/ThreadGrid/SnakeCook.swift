@@ -60,7 +60,7 @@ public struct SnakeCook {
     
             
             defer {
- //               command(renderer: renderer, metalView: metalView, canvas: canvas)
+                command(renderer: renderer, metalView: metalView, canvas: canvas)
             }
             
             return ([canvas], [], [], [1])
@@ -82,6 +82,15 @@ public struct SnakeCook {
                 print("input command:")
                 guard let line = readLine() else { continue }
                 switch line {
+                case "point":
+                    print("input point at 'X:Y'")
+                    if let f = readLine() {
+                        DispatchQueue.main.async {
+                            let s = f.split(separator: ":")
+                            guard s.count == 2, let x = Int(s.first!), let y = Int(s.last!) else { return }
+                            renderer.tapAt(x: x, y: y)
+                        }
+                    }
                 case "force": 
                     print("input force 'X:Y'")
                     if let _ = readLine() {

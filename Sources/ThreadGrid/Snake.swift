@@ -7,7 +7,7 @@ struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
     var velocity: SIMD2<Float>
     let info: SIMD2<Float>  
     var density: Float
-    var cell: Int8 // 0 field, 1 body, 2 target. 
+    var cell: Int8 // 0 field, 1 body, 2 head, 3 target
     let velocityAllow: Bool
     
     var char: Character {
@@ -25,7 +25,7 @@ struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
         }
         out = "\(density)" + out
 //        return out
-        return "[\(velocity.x),\(velocity.y), \(out)]" 
+        return "[\(velocity.x),\(velocity.y), \(out), \(cell)]" 
     }
     var isEmpty: Bool { false }
     init() {
@@ -62,8 +62,8 @@ struct InfoBuffer {
 }
 
 struct SnakeFridge {
-    let width = 8
-    let height = 8
+    let width = 9
+    let height = 9
     var headDirection: SIMD2<Float> 
     var black: ThreadGrid<SnakeCell>
     var white: ThreadGrid<SnakeCell>
@@ -71,7 +71,9 @@ struct SnakeFridge {
     var debug2: ThreadGrid<SnakeCell>
     var debug3: ThreadGrid<SnakeCell>
     var infobuffer: InfoBuffer
+    let renderPacket: RenderPacket
     init(packet: RenderPacket) {
+        renderPacket = packet
         infobuffer = InfoBuffer(device: packet.device, width: 10)
         black = ThreadGrid<SnakeCell>(device: packet.device, width: width, height: height)
         white = ThreadGrid<SnakeCell>(device: packet.device, width: width, height: height)
@@ -79,30 +81,50 @@ struct SnakeFridge {
         debug2 = ThreadGrid<SnakeCell>(device: packet.device, width: width, height: height)
         debug3 = ThreadGrid<SnakeCell>(device: packet.device, width: width, height: height)
         headDirection = .zero
-        touchSpot()
+        initialSpot()
     }
-    mutating func touchSpot() {
-        
+    mutating func initialSpot() {
         var cell = SnakeCell()
+        
         cell.density = 1.0
         cell.velocity = [1.0, 0.0]
-        cell.cell = 1
-        
+        cell.cell = 2
         black.columns[3][2] = cell
-        white.columns[3][2] = cell
+        
+        cell.density = 1
+        cell.cell = 1
+        black.columns[2][2] = cell
         
         cell.density = 0
         cell.cell = 0
-        black.columns[2][2] = cell
-        white.columns[2][2] = cell
-//        cell.velocity = .zero
-//        cell.cell = 2
-//        black.columns[5][5] = cell
-//        white.columns[5][5] = cell
+        black.columns[1][2] = cell
+        
+        cell.density = 1.0
+        cell.cell = 3
+        cell.velocity = .zero
+        black.columns[5][5] = cell
+        black.columns[2][5] = cell
         
         black.fillBuffer()
-        white.fillBuffer()
+        
+        copy(from: black, to: white)
+        white.unbind()
+        print("initial")
+        renderBlackWhite()
     }
+    
+    func copy(from: ThreadGrid<SnakeCell>, to: ThreadGrid<SnakeCell>) {
+        let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
+        let blitEncoder = commandBuffer.makeBlitCommandEncoder()!
+        blitEncoder.copy(from: from.buffer, 
+                         sourceOffset: 0, 
+                         to: to.buffer, 
+                         destinationOffset: 0, 
+                         size: from.biteSize)
+        blitEncoder.endEncoding()
+        commandBuffer.commit()
+    }
+    
     mutating func renderSubtraction() {
 //        print("- black")
 //        debug3.unbind()
@@ -124,9 +146,9 @@ struct SnakeFridge {
 //        white.render()
     }
     mutating func renderBlackWhite() {
-//        print("- white")
-//        white.unbind()
-//        white.render()
+        print("- white")
+        white.unbind()
+        white.render()
         print("- black")
         black.unbind()
         black.render()
@@ -144,7 +166,9 @@ class SnakeRenderer: NSObject, MTKViewDelegate  {
     let clearTextureState: MTLComputePipelineState
     let advectState: MTLComputePipelineState
     let diffState: MTLComputePipelineState
+    let captureState: MTLComputePipelineState
     let swapHeadState: MTLComputePipelineState
+    let copyState: MTLComputePipelineState
     let fillTextureState: MTLComputePipelineState
     let setVelocityState: MTLComputePipelineState
     
@@ -167,6 +191,10 @@ class SnakeRenderer: NSObject, MTKViewDelegate  {
         diffState = try! renderPacket.device.makeComputePipelineState(function: function)
         function = renderPacket.library.makeFunction(name: "swapSnake")!
         swapHeadState = try! renderPacket.device.makeComputePipelineState(function: function)
+        function = renderPacket.library.makeFunction(name: "captureSnake")!
+        captureState = try! renderPacket.device.makeComputePipelineState(function: function)
+        function = renderPacket.library.makeFunction(name: "copySnake")!
+        copyState = try! renderPacket.device.makeComputePipelineState(function: function)
         super.init()
         print("render initial")
         fridge.renderBlackWhite()
@@ -179,10 +207,21 @@ class SnakeRenderer: NSObject, MTKViewDelegate  {
         descriptor.usage = [.shaderRead, .shaderWrite]
         return device.makeTexture(descriptor: descriptor)
     }
+    func tapAt(x: Int, y: Int) {
+        print("taped at: \(x), \(y)")
+        fridge.black.unbind()
+        fridge.white.unbind()
+        var cell = fridge.black.columns[x][y]
+        cell.density = 1.0
+        fridge.black.columns[x][y] = cell
+        fridge.black.fillBuffer()
+        fridge.copy(from: fridge.black, to: fridge.white)
+        fridge.white.unbind()
+        fridge.renderBlackWhite()
+    }
     func setVelocity() {
-        guard let commandBuffer = renderPacket.commandQueue.makeCommandBuffer(),
-              let commandEncoder = commandBuffer.makeComputeCommandEncoder()
-        else { return }
+        let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
+        let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
         let width = setVelocityState.threadExecutionWidth
         let height = setVelocityState.maxTotalThreadsPerThreadgroup / width
         let threadsPerGroup = MTLSizeMake(width, height, 1)
@@ -238,15 +277,24 @@ class SnakeRenderer: NSObject, MTKViewDelegate  {
         threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         
-        commandEncoder.setComputePipelineState(diffState)
-        commandEncoder.setBuffer(fridge.black.buffer, offset: 0, index: 0) // вычитаемое
-        commandEncoder.setBuffer(fridge.white.buffer, offset: 0, index: 1) // уменьшаемое
-        commandEncoder.setBuffer(fridge.infobuffer.buffer, offset: 0, index: 2)
-        commandEncoder.setBuffer(fridge.debug1.buffer, offset: 0, index: 3)
-        commandEncoder.setBuffer(fridge.debug2.buffer, offset: 0, index: 4)
+        width = copyState.threadExecutionWidth
+        height = copyState.maxTotalThreadsPerThreadgroup / width
+        commandEncoder.setComputePipelineState(copyState)
+        commandEncoder.setBuffer(fridge.white.buffer, offset: 0, index: 0) // source
+        commandEncoder.setBuffer(fridge.black.buffer, offset: 0, index: 1) // target
         threadsPerGroup = MTLSizeMake(width, height, 1)
         threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        
+        width = captureState.threadExecutionWidth
+        height = captureState.maxTotalThreadsPerThreadgroup / width
+        commandEncoder.setComputePipelineState(captureState)
+        commandEncoder.setBuffer(fridge.black.buffer, offset: 0, index: 0)
+        commandEncoder.setBuffer(fridge.white.buffer, offset: 0, index: 1)
+        threadsPerGroup = MTLSizeMake(width, height, 1)
+        threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        
         
         commandEncoder.setComputePipelineState(fillTextureState)
         commandEncoder.setBuffer(fridge.white.buffer, offset: 0, index: 0)
