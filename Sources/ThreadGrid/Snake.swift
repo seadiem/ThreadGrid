@@ -1,17 +1,21 @@
 import Induction
 import Metal
+import CoreStructures
+import RenderSetup
 
 struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
-    static var length: Int { MemoryLayout<SnakeCell>.stride }
+    static var length: Int { MemoryLayout<SnakeCellC>.stride }
     
-    var velocity: SIMD2<Float>
-    let info: SIMD2<Float>  
-    var density: Float
-    var cell: Int8 // 0 field, 1 body, 2 head, 3 target
-    let velocityAllow: Bool
+//    var velocity: SIMD2<Float>
+//    let info: SIMD2<Float>  
+//    var density: Float
+//    var cell: Int8 // 0 field, 1 body, 2 head, 3 target
+//    let velocityAllow: Bool
+    
+    var base: SnakeCellC
     
     var char: Character {
-        if density > 0.5 { return "◼︎" }
+        if base.density > 0.5 { return "◼︎" }
         else { return "◻︎" }
     }
 //        var description: String { "[\(info.x), \(info.y)]" }
@@ -20,23 +24,25 @@ struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
 //    var description: String { "[\(velocity.x),\(velocity.y); \(char)]" }
     var description: String { 
         var out = "" 
-        if "\(density)".count == 3 {
+        if "\(base.density)".count == 3 {
             out = "0"
         }
-        out = "\(density)" + out
+        out = "\(base.density)" + out
 //        return out
-        return "[\(velocity.x),\(velocity.y), \(out), \(cell)]" 
+        return "[\(base.velocity.x),\(base.velocity.y), \(out), \(base.cell)]" 
     }
     var isEmpty: Bool { false }
     init() {
-        velocity = .zero
-        density = 0.0
-        info = .zero
-        cell = 0
-        velocityAllow = true;
+//        velocity = .zero
+//        density = 0.0
+//        info = .zero
+//        cell = 0
+//        velocityAllow = true;
+        
+        base = SnakeCellC(velocity: .zero, info: .zero, density: 0, cell: 0, velocityAllow: 1)
+        
     }
 }
-
 
 struct InfoBuffer {
     let width: Int
@@ -86,22 +92,22 @@ struct SnakeFridge {
     mutating func initialSpot() {
         var cell = SnakeCell()
         
-        cell.density = 1.0
-        cell.velocity = [1.0, 0.0]
-        cell.cell = 2
+        cell.base.density = 1.0
+        cell.base.velocity = [1.0, 0.0]
+        cell.base.cell = 2
         black.columns[3][2] = cell
         
-        cell.density = 1
-        cell.cell = 1
+        cell.base.density = 1
+        cell.base.cell = 1
         black.columns[2][2] = cell
         
-        cell.density = 0
-        cell.cell = 0
+        cell.base.density = 0
+        cell.base.cell = 0
         black.columns[1][2] = cell
         
-        cell.density = 1.0
-        cell.cell = 3
-        cell.velocity = .zero
+        cell.base.density = 1.0
+        cell.base.cell = 3
+        cell.base.velocity = .zero
         black.columns[5][5] = cell
         black.columns[2][5] = cell
         
@@ -165,9 +171,7 @@ class SnakeRenderer: NSObject, MTKViewDelegate  {
     let texture: MTLTexture
     let clearTextureState: MTLComputePipelineState
     let advectState: MTLComputePipelineState
-    let diffState: MTLComputePipelineState
     let captureState: MTLComputePipelineState
-    let swapHeadState: MTLComputePipelineState
     let copyState: MTLComputePipelineState
     let fillTextureState: MTLComputePipelineState
     let setVelocityState: MTLComputePipelineState
@@ -187,10 +191,6 @@ class SnakeRenderer: NSObject, MTKViewDelegate  {
         fillTextureState = try! renderPacket.device.makeComputePipelineState(function: function)
         function = renderPacket.library.makeFunction(name: "setHeadVelocity")!
         setVelocityState = try! renderPacket.device.makeComputePipelineState(function: function)
-        function = renderPacket.library.makeFunction(name: "diffSnake")!
-        diffState = try! renderPacket.device.makeComputePipelineState(function: function)
-        function = renderPacket.library.makeFunction(name: "swapSnake")!
-        swapHeadState = try! renderPacket.device.makeComputePipelineState(function: function)
         function = renderPacket.library.makeFunction(name: "captureSnake")!
         captureState = try! renderPacket.device.makeComputePipelineState(function: function)
         function = renderPacket.library.makeFunction(name: "copySnake")!
@@ -212,7 +212,7 @@ class SnakeRenderer: NSObject, MTKViewDelegate  {
         fridge.black.unbind()
         fridge.white.unbind()
         var cell = fridge.black.columns[x][y]
-        cell.density = 1.0
+        cell.base.density = 1.0
         fridge.black.columns[x][y] = cell
         fridge.black.fillBuffer()
         fridge.copy(from: fridge.black, to: fridge.white)

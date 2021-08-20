@@ -1,5 +1,6 @@
 import Metal
 import Induction
+import RenderSetup
 
 struct FluidCell: CustomStringConvertible, EmptyInit, LengthSupplier {
     static var length: Int { MemoryLayout<FluidCell>.stride }

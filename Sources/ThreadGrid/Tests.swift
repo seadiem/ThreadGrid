@@ -1,3 +1,5 @@
+import CoreStructures
+
 public struct TestThreadGrid {
     public init() {}
     public func run() {
@@ -5,7 +7,8 @@ public struct TestThreadGrid {
 //        TestFridge().run()
 //        TestQuickPass().run()
 //        CheckSimd().run()
-        Geometry().test()
+//        Geometry().test()
+        Ctest().run()
     }
 }
 
@@ -28,6 +31,15 @@ struct TestQuickPass {
             pass.render()
             pass.further()    
         }
+    }
+}
+
+struct Ctest {
+    func run() {
+        let s: Array<Int32> = [1, 2, 3, 4]
+        let uint8Pointer = UnsafeMutablePointer<Int32>.allocate(capacity: 4)
+        uint8Pointer.initialize(from: s, count: 4)
+        printIntArrayContent(uint8Pointer, 4)
     }
 }
 

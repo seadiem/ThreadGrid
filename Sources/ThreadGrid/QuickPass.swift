@@ -1,4 +1,5 @@
 import Metal
+import RenderSetup
 
 class QuickPass {
     

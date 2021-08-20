@@ -1,3 +1,5 @@
+import RenderSetup
+
 struct FluidFridgeOne {
     let width = 18
     let height = 18

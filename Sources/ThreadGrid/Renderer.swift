@@ -1,5 +1,6 @@
 import MetalKit
 import MetalPerformanceShaders
+import RenderSetup
 
 class Renderer: NSObject {
     

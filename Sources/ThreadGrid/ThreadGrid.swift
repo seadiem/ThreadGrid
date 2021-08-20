@@ -1,7 +1,7 @@
 import Metal
 import Induction
 import Algorithms
-
+import RenderSetup
 
 protocol LengthSupplier {
     static var length: Int { get }

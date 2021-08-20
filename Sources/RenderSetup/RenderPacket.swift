@@ -1,13 +1,13 @@
 import Metal
 import Files
 
-struct RenderPacket {
+public struct RenderPacket {
     
-    let device: MTLDevice
-    let commandQueue: MTLCommandQueue
-    let library: MTLLibrary
+    public let device: MTLDevice
+    public let commandQueue: MTLCommandQueue
+    public let library: MTLLibrary
     
-    init() {
+    public init() {
     
         let device = MTLCreateSystemDefaultDevice()!
         let commandQueue = device.makeCommandQueue()!
@@ -22,7 +22,8 @@ struct RenderPacket {
                     file.name == "Move.metal" ||
                     file.name == "Advection.metal" ||
                     file.name == "Debug.metal" ||
-                    file.name == "Snake.metal"
+                    file.name == "Snake.metal" ||
+                    file.name == "SnakeRender.metal"
             else { continue }
             guard let content = try? file.readAsString() else { continue }
             shader += content

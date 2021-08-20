@@ -1,5 +1,6 @@
 import MetalKit
 import MetalPerformanceShaders
+import RenderSetup
 
 public class RendererLights: NSObject {
 

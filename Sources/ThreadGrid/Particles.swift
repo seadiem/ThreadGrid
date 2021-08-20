@@ -1,5 +1,6 @@
 import Metal
 import simd
+import RenderSetup
 
 struct Butterfly: Equatable, Hashable {
     let id: Int

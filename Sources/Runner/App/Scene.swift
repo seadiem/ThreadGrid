@@ -1,9 +1,11 @@
 import App
 import ThreadGrid
+import Snake
 
 struct Apps {
     var threadGrid: ControllerPacket { FluidCook().prepareDraw() }
-    var snake: ControllerPacket { SnakeCook().prepareDraw() }
+    var snakeFluids: ControllerPacket { ThreadGrid.SnakeCook().prepareDraw() }
+    var snake: ControllerPacket { Snake.SnakeCook().prepareDraw() }
 }
 
 struct Scene {

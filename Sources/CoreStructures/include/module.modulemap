@@ -1,0 +1,3 @@
+module CoreStructures {
+    header "CoreStructures.h"
+}

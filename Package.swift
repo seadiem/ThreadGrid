@@ -15,17 +15,20 @@ let package = Package(
         .package(url: "/Users/oktet/Code/Learn/HanoyTowers", .branch("metal")),
     ],
     targets: [
+        .target(name: "CoreStructures", dependencies: []),
+        .target(name: "Draw", dependencies: []),
+        .target(name: "RenderSetup", dependencies: []),
+        .target(name: "Math", dependencies: []),
+        .target(name: "App", dependencies: ["Draw"]),
+        .target(
+            name: "Snake",
+            dependencies: ["CoreStructures", "Draw", "App", "ThreadGrid", "RenderSetup", "Math"]),
         .target(
             name: "ThreadGrid",
-            dependencies: ["Files", .product(name: "Algorithms", package: "swift-algorithms"), "HanoyTowers", "Draw"]),
-        .target(
-            name: "Draw",
-            dependencies: []),
-        .target(
-            name: "App",
-            dependencies: ["Draw"]),
+            dependencies: ["Files", "HanoyTowers", "Draw", "CoreStructures", "App", "RenderSetup",
+                           .product(name: "Algorithms", package: "swift-algorithms")]),
         .target(
             name: "Runner",
-            dependencies: ["App", "ThreadGrid"]),
+            dependencies: ["App", "ThreadGrid", "Snake"]),
     ]
 )
