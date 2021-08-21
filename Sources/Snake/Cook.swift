@@ -27,18 +27,16 @@ public struct SnakeCook {
             let renderer = Renderer(metalView: metalView)
             metalView.delegate = renderer
             
+            
+            
             canvas.mousedrug = { point in
-                var vector: SIMD2<Float> = [Float(point.x), Float(point.y)]
-                vector.x /= 400
-                vector.x *= 3
-                vector.y /= 300
-                vector.y *= 3
-                renderer.rotate(xy: vector)
+                renderer.mouseDrug(at: point)
                 metalView.setNeedsDisplay(canvas.bounds)
             }
             
-            canvas.mousedown = { point in
-            }
+            canvas.mousedown = { point in renderer.mouseDown(at: point) }
+            canvas.mouseup = { point in renderer.mouseUp(at: point)  }
+            
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { (e) -> NSEvent? in
                 return e
             }

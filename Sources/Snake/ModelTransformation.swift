@@ -3,6 +3,8 @@ import Math
 
 public struct ModelTransformation {
     
+    static var zero: ModelTransformation { ModelTransformation() }
+    
     var ihat: SIMD3<Float>
     var jhat: SIMD3<Float>
     var khat: SIMD3<Float>

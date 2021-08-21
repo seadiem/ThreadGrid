@@ -2,25 +2,26 @@ import MetalKit
 import RenderSetup
 import Math
 
+
 class Renderer: NSObject, MTKViewDelegate {
         
     let renderPacket: RenderPacket
-    let mesh: MTKMesh
-    var rotateXY: SIMD2<Float>
-    
+    let mesh: MTKMesh    
     let pipelineState: MTLRenderPipelineState!
+    
+    // Model
+    var track = Track()
+    var rotateXY: SIMD2<Float>
     
     init(metalView: MTKView) {
         renderPacket = RenderPacket()
         metalView.framebufferOnly = false
         
         let allocator = MTKMeshBufferAllocator(device: renderPacket.device)
-        let iomesh = MDLMesh(boxWithExtent: [5, 5, 2],segments: [1, 1, 1],
+        let iomesh = MDLMesh(boxWithExtent: [5, 5, 5],segments: [1, 1, 1],
                            inwardNormals: false, geometryType: .triangles,
                            allocator: allocator)
         mesh = try! MTKMesh(mesh: iomesh, device: renderPacket.device)
-        let z = mesh.vertexDescriptor
-        print("z: \(z)")
         rotateXY = .zero
         
         let vertexfunction = renderPacket.library.makeFunction(name: "snakeVertex")!
@@ -34,9 +35,7 @@ class Renderer: NSObject, MTKViewDelegate {
         
         super.init()
     }
-    func rotate(xy: SIMD2<Float>) { rotateXY = xy }
     func draw(in view: MTKView) {
-        print(rotateXY)
         let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
         let descriptor = view.currentRenderPassDescriptor!
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)!
@@ -45,11 +44,10 @@ class Renderer: NSObject, MTKViewDelegate {
         
         let size = view.bounds.size
         let matricies = Matricies(screen: [Float(size.width), Float(size.height)], 
-                          position: [0, 0, 0], 
-                          // rotation: [0, -rotateXY.x, rotateXY.y],
-                          rotation: [rotateXY.y, -rotateXY.x, 0],
-                          moveCamera: [0, 0, -10], 
-                          localTransform: ModelTransformation())
+                                  position: [0, 0, 0], 
+                                  rotation: [rotateXY.y, -rotateXY.x, 0],
+                                  moveCamera: [0, 0, -10], 
+                                  localTransform: .zero)
         
         var matrixbuffer = [simd_float4x4]()
         matrixbuffer.append(matricies.projectionMatrix)
@@ -70,4 +68,16 @@ class Renderer: NSObject, MTKViewDelegate {
         commandBuffer.commit()
     }
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+}
+
+// API
+extension Renderer {
+    func mouseDown(at point: CGPoint) {}
+    func mouseDrug(at point: CGPoint) {
+        guard let dif = track.getDiff(touch: point.simd2float) else { return }
+        rotateXY += dif / 100
+    }
+    func mouseUp(at point: CGPoint) {
+        track.touchUp()
+    }
 }
