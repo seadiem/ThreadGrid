@@ -8,3 +8,14 @@ struct SnakeCellC {
 };
 void printIntArrayContent(int* array, int size);
 void initialArrayWay();
+
+struct IOVertex {
+    simd_float3 position;
+    simd_float3 normal;
+    simd_float2 textureCoordinate;
+};
+
+struct IOVertex2 {
+    simd_float3 position;
+    simd_float3 normal;
+};

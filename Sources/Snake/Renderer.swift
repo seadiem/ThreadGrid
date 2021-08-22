@@ -8,6 +8,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let renderPacket: RenderPacket
     let mesh: MTKMesh    
     let pipelineState: MTLRenderPipelineState!
+    let depthStencilState: MTLDepthStencilState
     
     // Model
     var track = Track()
@@ -16,11 +17,15 @@ class Renderer: NSObject, MTKViewDelegate {
     init(metalView: MTKView) {
         renderPacket = RenderPacket()
         metalView.framebufferOnly = false
+        metalView.depthStencilPixelFormat = .depth32Float
+        metalView.device = renderPacket.device
         
         let allocator = MTKMeshBufferAllocator(device: renderPacket.device)
         let iomesh = MDLMesh(boxWithExtent: [5, 5, 5],segments: [1, 1, 1],
                            inwardNormals: false, geometryType: .triangles,
                            allocator: allocator)
+        iomesh.addNormals(withAttributeNamed: MDLVertexAttributeNormal, creaseThreshold: 1)
+        iomesh.vertexDescriptor = MDLVertexDescriptor.defaultVertexDescriptor
         mesh = try! MTKMesh(mesh: iomesh, device: renderPacket.device)
         rotateXY = .zero
         
@@ -29,16 +34,29 @@ class Renderer: NSObject, MTKViewDelegate {
         let pipelineDescriptor = MTLRenderPipelineDescriptor()
         pipelineDescriptor.vertexFunction = vertexfunction
         pipelineDescriptor.fragmentFunction = fragmentfunction
-        pipelineDescriptor.vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(mesh.vertexDescriptor)
-        pipelineDescriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
+        pipelineDescriptor.vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(MDLVertexDescriptor.defaultVertexDescriptor)
+        
+        pipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        pipelineDescriptor.depthAttachmentPixelFormat = .depth32Float
+        
         pipelineState = try! renderPacket.device.makeRenderPipelineState(descriptor: pipelineDescriptor)
         
+        
+  
+        let descriptor = MTLDepthStencilDescriptor()
+        descriptor.depthCompareFunction = .less
+        descriptor.isDepthWriteEnabled = true
+        depthStencilState = renderPacket.device.makeDepthStencilState(descriptor: descriptor)!
+        
         super.init()
+        
+        print(pipelineDescriptor.vertexDescriptor!)
     }
     func draw(in view: MTKView) {
         let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
         let descriptor = view.currentRenderPassDescriptor!
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)!
+        renderEncoder.setDepthStencilState(depthStencilState)
         renderEncoder.setRenderPipelineState(pipelineState)
         renderEncoder.setVertexBuffer(mesh.vertexBuffers[0].buffer, offset: 0, index: 0)
         

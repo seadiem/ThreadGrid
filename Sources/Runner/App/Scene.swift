@@ -14,6 +14,7 @@ struct Scene {
         App(packet: Apps().snake).run()
     }
     func test() {
-        TestThreadGrid().run()
+//        TestThreadGrid().run()
+        SnakeTest().run()
     }
 }

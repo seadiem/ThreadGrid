@@ -21,6 +21,9 @@ public struct SnakeCook {
             metalView.preferredFramesPerSecond = 60
             metalView.enableSetNeedsDisplay = true
             metalView.isPaused = true
+            let cc = SIMD3<Double>(Color.darkbrown.simd3)
+            metalView.clearColor = MTLClearColor(red: cc.x, green: cc.y, blue: cc.z, alpha: 1)
+            
             canvas.addSubview(metalView)
             let defaultDevice = MTLCreateSystemDefaultDevice()!
             metalView.device = defaultDevice
