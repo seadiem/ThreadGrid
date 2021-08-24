@@ -19,3 +19,15 @@ struct IOVertex2 {
     simd_float3 position;
     simd_float3 normal;
 };
+
+struct RazewareUniforms {
+    simd_float4x4 modelMatrix;
+    simd_float4x4 viewMatrix;
+    simd_float4x4 projectionMatrix;
+    simd_float3x3 normalMatrix;
+};
+
+struct FragmentUniforms {
+    char lightCount;
+    simd_float3 cameraPosition;
+};

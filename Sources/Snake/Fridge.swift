@@ -1,8 +1,5 @@
-struct Positions {
-    
-    let positions: [SIMD3<Float>]
-//    init() {
-//        
-//    }
-    
-}
+//struct Rubik {
+//    var body: Body
+//    var size: SIMD3<Float>
+//}
+

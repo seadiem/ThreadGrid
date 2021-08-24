@@ -13,6 +13,7 @@ class Renderer: NSObject, MTKViewDelegate {
     // Model
     var track = Track()
     var rotateXY: SIMD2<Float>
+    var scene: Scene
     
     init(metalView: MTKView) {
         renderPacket = RenderPacket()
@@ -29,8 +30,10 @@ class Renderer: NSObject, MTKViewDelegate {
         mesh = try! MTKMesh(mesh: iomesh, device: renderPacket.device)
         rotateXY = .zero
         
-        let vertexfunction = renderPacket.library.makeFunction(name: "snakeVertex")!
-        let fragmentfunction = renderPacket.library.makeFunction(name: "snakeFragment")!
+//        let vertexfunction = renderPacket.library.makeFunction(name: "snakeVertex")!
+//        let fragmentfunction = renderPacket.library.makeFunction(name: "snakeFragment")!
+        let vertexfunction = renderPacket.library.makeFunction(name: "vertexMainRazeware")!
+        let fragmentfunction = renderPacket.library.makeFunction(name: "fragmentMainRazeware")!
         let pipelineDescriptor = MTLRenderPipelineDescriptor()
         pipelineDescriptor.vertexFunction = vertexfunction
         pipelineDescriptor.fragmentFunction = fragmentfunction
@@ -48,11 +51,24 @@ class Renderer: NSObject, MTKViewDelegate {
         descriptor.isDepthWriteEnabled = true
         depthStencilState = renderPacket.device.makeDepthStencilState(descriptor: descriptor)!
         
+        scene = Scene(renderPacket: renderPacket)
+        scene.camera.aspect = Float(metalView.bounds.width)/Float(metalView.bounds.height)
         super.init()
-        
-        print(pipelineDescriptor.vertexDescriptor!)
     }
+    
     func draw(in view: MTKView) {
+        let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
+        let descriptor = view.currentRenderPassDescriptor!
+        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)!
+        renderEncoder.setDepthStencilState(depthStencilState)
+        renderEncoder.setRenderPipelineState(pipelineState)
+        scene.draw(into: renderEncoder)
+        renderEncoder.endEncoding()
+        commandBuffer.present(view.currentDrawable!)
+        commandBuffer.commit()
+    }
+    
+    func drawOLD(in view: MTKView) {
         let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
         let descriptor = view.currentRenderPassDescriptor!
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)!
@@ -85,7 +101,10 @@ class Renderer: NSObject, MTKViewDelegate {
         commandBuffer.present(view.currentDrawable!)
         commandBuffer.commit()
     }
-    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+        
+        scene.camera.aspect = Float(view.bounds.width)/Float(view.bounds.height)
+    }
 }
 
 // API
@@ -93,7 +112,11 @@ extension Renderer {
     func mouseDown(at point: CGPoint) {}
     func mouseDrug(at point: CGPoint) {
         guard let dif = track.getDiff(touch: point.simd2float) else { return }
+//        let dif3
         rotateXY += dif / 100
+//        scene.cameraR.rotate(delta: dif / 100)
+//        scene.camera.zoom(delta: dif.y)
+        scene.coub.body.rotation = [-rotateXY.y, rotateXY.x, 0]
     }
     func mouseUp(at point: CGPoint) {
         track.touchUp()

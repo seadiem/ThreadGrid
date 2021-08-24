@@ -23,7 +23,8 @@ public struct RenderPacket {
                     file.name == "Advection.metal" ||
                     file.name == "Debug.metal" ||
                     file.name == "Snake.metal" ||
-                    file.name == "SnakeRender.metal"
+                    file.name == "SnakeRender.metal" ||
+                    file.name == "SnakeRenderRazeware.metal"
             else { continue }
             guard let content = try? file.readAsString() else { continue }
             shader += content
