@@ -22,7 +22,7 @@ struct Camera {
     
     var body: Body
     
-    var fovRadians: Float = Float(70).degreesToRadians
+    var fovRadians: Float = (Float.pi * 2) / 5
     var aspect: Float = 1
     var near: Float = 0.001
     var far: Float = 100

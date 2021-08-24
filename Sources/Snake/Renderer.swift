@@ -30,8 +30,6 @@ class Renderer: NSObject, MTKViewDelegate {
         mesh = try! MTKMesh(mesh: iomesh, device: renderPacket.device)
         rotateXY = .zero
         
-//        let vertexfunction = renderPacket.library.makeFunction(name: "snakeVertex")!
-//        let fragmentfunction = renderPacket.library.makeFunction(name: "snakeFragment")!
         let vertexfunction = renderPacket.library.makeFunction(name: "vertexMainRazeware")!
         let fragmentfunction = renderPacket.library.makeFunction(name: "fragmentMainRazeware")!
         let pipelineDescriptor = MTLRenderPipelineDescriptor()
@@ -67,40 +65,6 @@ class Renderer: NSObject, MTKViewDelegate {
         commandBuffer.present(view.currentDrawable!)
         commandBuffer.commit()
     }
-    
-    func drawOLD(in view: MTKView) {
-        let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
-        let descriptor = view.currentRenderPassDescriptor!
-        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)!
-        renderEncoder.setDepthStencilState(depthStencilState)
-        renderEncoder.setRenderPipelineState(pipelineState)
-        renderEncoder.setVertexBuffer(mesh.vertexBuffers[0].buffer, offset: 0, index: 0)
-        
-        let size = view.bounds.size
-        let matricies = Matricies(screen: [Float(size.width), Float(size.height)], 
-                                  position: [0, 0, 0], 
-                                  rotation: [rotateXY.y, -rotateXY.x, 0],
-                                  moveCamera: [0, 0, -10], 
-                                  localTransform: .zero)
-        
-        var matrixbuffer = [simd_float4x4]()
-        matrixbuffer.append(matricies.projectionMatrix)
-        matrixbuffer.append(matricies.viewMatrix)
-        matrixbuffer.append(matricies.modelMatrix)
-        renderEncoder.setVertexBytes(matrixbuffer, length: matrixbuffer.count * MemoryLayout<simd_float4x4>.stride, index: 1)
-        
-        for submesh in mesh.submeshes {
-            renderEncoder.drawIndexedPrimitives(type: .triangle,
-                                                indexCount: submesh.indexCount,
-                                                indexType: submesh.indexType,
-                                                indexBuffer: submesh.indexBuffer.buffer,
-                                                indexBufferOffset: submesh.indexBuffer.offset)
-        }
-        
-        renderEncoder.endEncoding()
-        commandBuffer.present(view.currentDrawable!)
-        commandBuffer.commit()
-    }
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         
         scene.camera.aspect = Float(view.bounds.width)/Float(view.bounds.height)
@@ -112,10 +76,7 @@ extension Renderer {
     func mouseDown(at point: CGPoint) {}
     func mouseDrug(at point: CGPoint) {
         guard let dif = track.getDiff(touch: point.simd2float) else { return }
-//        let dif3
         rotateXY += dif / 100
-//        scene.cameraR.rotate(delta: dif / 100)
-//        scene.camera.zoom(delta: dif.y)
         scene.coub.body.rotation = [-rotateXY.y, rotateXY.x, 0]
     }
     func mouseUp(at point: CGPoint) {
