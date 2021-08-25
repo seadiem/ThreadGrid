@@ -31,3 +31,7 @@ struct FragmentUniforms {
     char lightCount;
     simd_float3 cameraPosition;
 };
+
+struct CoubeTransform {
+    simd_float4x4 modelMatrix;
+};

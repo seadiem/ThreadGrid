@@ -30,7 +30,7 @@ class Renderer: NSObject, MTKViewDelegate {
         mesh = try! MTKMesh(mesh: iomesh, device: renderPacket.device)
         rotateXY = .zero
         
-        let vertexfunction = renderPacket.library.makeFunction(name: "vertexMainRazeware")!
+        let vertexfunction = renderPacket.library.makeFunction(name: "vertexMainRazewareInstancing")!
         let fragmentfunction = renderPacket.library.makeFunction(name: "fragmentMainRazeware")!
         let pipelineDescriptor = MTLRenderPipelineDescriptor()
         pipelineDescriptor.vertexFunction = vertexfunction

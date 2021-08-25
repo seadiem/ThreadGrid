@@ -54,3 +54,26 @@ struct InspectMesh {
         print(mesh.vertexDescriptor)
     }
 }
+
+struct TestRotation {
+    
+    
+    func map(touch: SIMD2<Float>) {
+//        print("touch: \(touch)")
+        let ihat: SIMD3<Float> = [1, 0, 0]
+        let jhat: SIMD3<Float> = [0, 1, 0]
+        let khat: SIMD3<Float> = [300, 200, 1]
+        let matrix = simd_float3x3([ihat, jhat, khat])
+        let touch3: SIMD3<Float> = [touch.x, touch.y, 1] 
+        let mapped = matrix.inverse * touch3
+ //       print("mapped: \(mapped)")
+        getAngel(direction: [mapped.x, mapped.y])
+    }
+    
+    func getAngel(direction: SIMD2<Float>) {
+        let a = atan(direction.y / direction.x)
+        let alpha = atan2(direction.y, direction.x)
+        print("a: \(a), alpha: \(alpha)")
+    }
+    
+}
