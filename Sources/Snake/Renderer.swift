@@ -77,7 +77,7 @@ extension Renderer {
     func mouseDrug(at point: CGPoint) {
         guard let dif = track.getDiff(touch: point.simd2float) else { return }
         rotateXY += dif / 100
-        scene.coub.body.rotation = [-rotateXY.y, rotateXY.x, 0]
+        scene.fridge.body.rotation = [-rotateXY.y, rotateXY.x, 0]
     }
     func mouseUp(at point: CGPoint) {
         track.touchUp()
