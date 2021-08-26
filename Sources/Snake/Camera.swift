@@ -14,7 +14,7 @@ struct Camera {
     }
     
     var projectionMatrix: simd_float4x4 {
-        float4x4(perspectiveWithAspect: aspect, fovy: (Float.pi * 2) / 5, near: 1, far: 100)
+        float4x4(perspectiveWithAspect: aspect, fovy: (Float.pi * 2) / 5, near: near, far: far)
     }
     
     var viewMatrix: simd_float4x4 {

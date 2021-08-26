@@ -1,17 +1,28 @@
 import MetalKit
 import RenderSetup
 import Math
+import ThreadGrid
 
 
 class Renderer: NSObject, MTKViewDelegate {
         
-    let renderPacket: RenderPacket
-    let mesh: MTKMesh    
+    let renderPacket: RenderPacket 
+    
+    // Compute
+    let clearTextureState: MTLComputePipelineState
+    let advectState: MTLComputePipelineState
+    let captureState: MTLComputePipelineState
+    let copyState: MTLComputePipelineState
+    let fillTextureState: MTLComputePipelineState
+    let setVelocityState: MTLComputePipelineState
+    
+    // Render
     let pipelineState: MTLRenderPipelineState!
     let depthStencilState: MTLDepthStencilState
     
     // Model
-    var track = Track()
+    var fridge: SnakeFridge
+    var track: Track
     var rotateXY: SIMD2<Float>
     var scene: Scene
     
@@ -21,14 +32,19 @@ class Renderer: NSObject, MTKViewDelegate {
         metalView.depthStencilPixelFormat = .depth32Float
         metalView.device = renderPacket.device
         
-        let allocator = MTKMeshBufferAllocator(device: renderPacket.device)
-        let iomesh = MDLMesh(boxWithExtent: [5, 5, 5],segments: [1, 1, 1],
-                           inwardNormals: false, geometryType: .triangles,
-                           allocator: allocator)
-        iomesh.addNormals(withAttributeNamed: MDLVertexAttributeNormal, creaseThreshold: 1)
-        iomesh.vertexDescriptor = MDLVertexDescriptor.defaultVertexDescriptor
-        mesh = try! MTKMesh(mesh: iomesh, device: renderPacket.device)
-        rotateXY = .zero
+        
+        var function = renderPacket.library.makeFunction(name: "fillSnakeTextureToDark")!
+        clearTextureState = try! renderPacket.device.makeComputePipelineState(function: function)
+        function = renderPacket.library.makeFunction(name: "unitAdvectVelocitySnake")!
+        advectState = try! renderPacket.device.makeComputePipelineState(function: function)
+        function = renderPacket.library.makeFunction(name: "fillSnakeTexture")!
+        fillTextureState = try! renderPacket.device.makeComputePipelineState(function: function)
+        function = renderPacket.library.makeFunction(name: "setHeadVelocity")!
+        setVelocityState = try! renderPacket.device.makeComputePipelineState(function: function)
+        function = renderPacket.library.makeFunction(name: "captureSnake")!
+        captureState = try! renderPacket.device.makeComputePipelineState(function: function)
+        function = renderPacket.library.makeFunction(name: "copySnake")!
+        copyState = try! renderPacket.device.makeComputePipelineState(function: function)
         
         let vertexfunction = renderPacket.library.makeFunction(name: "vertexMainRazewareInstancing")!
         let fragmentfunction = renderPacket.library.makeFunction(name: "fragmentMainRazeware")!
@@ -42,20 +58,73 @@ class Renderer: NSObject, MTKViewDelegate {
         
         pipelineState = try! renderPacket.device.makeRenderPipelineState(descriptor: pipelineDescriptor)
         
-        
-  
         let descriptor = MTLDepthStencilDescriptor()
         descriptor.depthCompareFunction = .less
         descriptor.isDepthWriteEnabled = true
         depthStencilState = renderPacket.device.makeDepthStencilState(descriptor: descriptor)!
         
+        fridge = SnakeFridge(packet: renderPacket)
         scene = Scene(renderPacket: renderPacket)
         scene.camera.aspect = Float(metalView.bounds.width)/Float(metalView.bounds.height)
+        rotateXY = .zero
+        track = Track()
         super.init()
     }
     
     func draw(in view: MTKView) {
         let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
+
+        //
+        let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
+        var width = clearTextureState.threadExecutionWidth
+        var height = clearTextureState.maxTotalThreadsPerThreadgroup / width
+        var threadsPerGroup = MTLSizeMake(width, height, 1)
+        var threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
+        commandEncoder.setComputePipelineState(clearTextureState)
+        commandEncoder.setTexture(view.currentDrawable!.texture, index: 0)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        
+        width = advectState.threadExecutionWidth
+        height = advectState.maxTotalThreadsPerThreadgroup / width
+        commandEncoder.setComputePipelineState(advectState)
+        commandEncoder.setBuffer(fridge.black.buffer, offset: 0, index: 0) // From
+        commandEncoder.setBuffer(fridge.white.buffer, offset: 0, index: 1) // To
+        commandEncoder.setBuffer(fridge.infobuffer.buffer, offset: 0, index: 2)
+        commandEncoder.setBuffer(fridge.debug3.buffer, offset: 0, index: 3) 
+        commandEncoder.setBuffer(fridge.debug2.buffer, offset: 0, index: 4)
+        commandEncoder.setBuffer(fridge.debug1.buffer, offset: 0, index: 5)
+        threadsPerGroup = MTLSizeMake(width, height, 1)
+        threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        
+        width = copyState.threadExecutionWidth
+        height = copyState.maxTotalThreadsPerThreadgroup / width
+        commandEncoder.setComputePipelineState(copyState)
+        commandEncoder.setBuffer(fridge.white.buffer, offset: 0, index: 0) // source
+        commandEncoder.setBuffer(fridge.black.buffer, offset: 0, index: 1) // target
+        threadsPerGroup = MTLSizeMake(width, height, 1)
+        threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        
+        width = captureState.threadExecutionWidth
+        height = captureState.maxTotalThreadsPerThreadgroup / width
+        commandEncoder.setComputePipelineState(captureState)
+        commandEncoder.setBuffer(fridge.black.buffer, offset: 0, index: 0)
+        commandEncoder.setBuffer(fridge.white.buffer, offset: 0, index: 1)
+        threadsPerGroup = MTLSizeMake(width, height, 1)
+        threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        commandEncoder.endEncoding()
+        
+        let blitEncoder = commandBuffer.makeBlitCommandEncoder()!
+        blitEncoder.copy(from: fridge.white.buffer, 
+                         sourceOffset: 0, 
+                         to: fridge.black.buffer, 
+                         destinationOffset: 0, 
+                         size: fridge.white.biteSize)
+        blitEncoder.endEncoding()
+        
+        //
         let descriptor = view.currentRenderPassDescriptor!
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)!
         renderEncoder.setDepthStencilState(depthStencilState)
@@ -66,12 +135,11 @@ class Renderer: NSObject, MTKViewDelegate {
         commandBuffer.commit()
     }
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        
         scene.camera.aspect = Float(view.bounds.width)/Float(view.bounds.height)
     }
 }
 
-// API
+// Touch API
 extension Renderer {
     func mouseDown(at point: CGPoint) {}
     func mouseDrug(at point: CGPoint) {

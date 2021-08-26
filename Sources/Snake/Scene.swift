@@ -11,8 +11,8 @@ class Scene {
     
     init(renderPacket: RenderPacket) {
         fridge = Fridge()
-        coub = Coub(renderPacket: renderPacket, size: [5, 5, 5])
-        camera = Camera(position: [0, 0, -10])
+        coub = Coub(renderPacket: renderPacket, size: [4.98, 4.98, 4.98])
+        camera = Camera(position: [0, 0, -20])
     }
     
     func draw(into renderEncoder: MTLRenderCommandEncoder) {

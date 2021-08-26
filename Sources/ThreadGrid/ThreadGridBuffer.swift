@@ -3,20 +3,20 @@ import Induction
 import Algorithms
 import RenderSetup
 
-protocol LengthSupplier {
+public protocol LengthSupplier {
     static var length: Int { get }
 }
 
-struct ThreadGrid<Cell: EmptyInit & LengthSupplier> {
+public struct ThreadGridBuffer<Cell: EmptyInit & LengthSupplier> {
     let width: Int
     let height: Int
     let size: Int
     var columns: [[Cell]]
-    let buffer: MTLBuffer
+    public let buffer: MTLBuffer
     var tempStorage: Array<Cell>
     var plainarray: [Cell] { columns.reduce(into: [Cell]()) { $0 += $1 } }
-    var biteSize: Int { size * Cell.length }
-    init(device: MTLDevice, width: Int, height: Int) {
+    public var biteSize: Int { size * Cell.length }
+    public init(device: MTLDevice, width: Int, height: Int) {
         self.width = width
         self.height = height
         size = width * height
@@ -46,11 +46,11 @@ struct DebugCell: CustomStringConvertible, EmptyInit, LengthSupplier {
 }
 
 struct DebugFridge {
-    var grid: ThreadGrid<DebugCell>
+    var grid: ThreadGridBuffer<DebugCell>
     var width: Int { grid.width }
     var height: Int { grid.height }
     init(packet: RenderPacket) {
-        grid = ThreadGrid(device: packet.device, width: 8, height: 3)
+        grid = ThreadGridBuffer(device: packet.device, width: 8, height: 3)
     }
     mutating func further() {
     }

@@ -43,24 +43,24 @@ struct FluidFridge {
     }
     let width = 9
     let height = 9
-    var black: ThreadGrid<FluidCell>
-    var white: ThreadGrid<FluidCell>
+    var black: ThreadGridBuffer<FluidCell>
+    var white: ThreadGridBuffer<FluidCell>
     var state: State
-    var current: ThreadGrid<FluidCell> {
+    var current: ThreadGridBuffer<FluidCell> {
         switch state {
         case .black: return black
         case .white: return white
         }
     }
-    var next: ThreadGrid<FluidCell> {
+    var next: ThreadGridBuffer<FluidCell> {
         switch state {
         case .black: return white
         case .white: return black
         }
     }
     init(packet: RenderPacket) {
-        black = ThreadGrid<FluidCell>(device: packet.device, width: width, height: height)
-        white = ThreadGrid<FluidCell>(device: packet.device, width: width, height: height)
+        black = ThreadGridBuffer<FluidCell>(device: packet.device, width: width, height: height)
+        white = ThreadGridBuffer<FluidCell>(device: packet.device, width: width, height: height)
         state = .black
         touchSpot()
 //        touchBigSpot()

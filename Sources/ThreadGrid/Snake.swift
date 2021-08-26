@@ -3,8 +3,8 @@ import Metal
 import CoreStructures
 import RenderSetup
 
-struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
-    static var length: Int { MemoryLayout<SnakeCellC>.stride }
+public struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
+    public static var length: Int { MemoryLayout<SnakeCellC>.stride }
     
 //    var velocity: SIMD2<Float>
 //    let info: SIMD2<Float>  
@@ -22,7 +22,7 @@ struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
     //    var description: String { String(char) }
 //        var description: String { "[\(velocity.x),\(velocity.y), \(char)]" }
 //    var description: String { "[\(velocity.x),\(velocity.y); \(char)]" }
-    var description: String { 
+    public var description: String { 
         var out = "" 
         if "\(base.density)".count == 3 {
             out = "0"
@@ -31,8 +31,8 @@ struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
 //        return out
         return "[\(base.velocity.x),\(base.velocity.y), \(out), \(base.cell)]" 
     }
-    var isEmpty: Bool { false }
-    init() {
+    public var isEmpty: Bool { false }
+    public init() {
 //        velocity = .zero
 //        density = 0.0
 //        info = .zero
@@ -44,10 +44,10 @@ struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
     }
 }
 
-struct InfoBuffer {
+public struct InfoBuffer {
     let width: Int
     var cells: [SIMD4<Float>]
-    let buffer: MTLBuffer
+    public let buffer: MTLBuffer
     var tempStorage: [SIMD4<Float>]
     init(device: MTLDevice, width: Int) {
         self.width = width
@@ -67,29 +67,29 @@ struct InfoBuffer {
     }
 }
 
-struct SnakeFridge {
-    let width = 9
-    let height = 9
+public struct SnakeFridge {
+    public let width = 9
+    public let height = 9
     var headDirection: SIMD2<Float> 
-    var black: ThreadGrid<SnakeCell>
-    var white: ThreadGrid<SnakeCell>
-    var debug1: ThreadGrid<SnakeCell>
-    var debug2: ThreadGrid<SnakeCell>
-    var debug3: ThreadGrid<SnakeCell>
-    var infobuffer: InfoBuffer
+    public var black: ThreadGridBuffer<SnakeCell>
+    public var white: ThreadGridBuffer<SnakeCell>
+    public var debug1: ThreadGridBuffer<SnakeCell>
+    public var debug2: ThreadGridBuffer<SnakeCell>
+    public var debug3: ThreadGridBuffer<SnakeCell>
+    public var infobuffer: InfoBuffer
     let renderPacket: RenderPacket
-    init(packet: RenderPacket) {
+    public init(packet: RenderPacket) {
         renderPacket = packet
         infobuffer = InfoBuffer(device: packet.device, width: 10)
-        black = ThreadGrid<SnakeCell>(device: packet.device, width: width, height: height)
-        white = ThreadGrid<SnakeCell>(device: packet.device, width: width, height: height)
-        debug1 = ThreadGrid<SnakeCell>(device: packet.device, width: width, height: height)
-        debug2 = ThreadGrid<SnakeCell>(device: packet.device, width: width, height: height)
-        debug3 = ThreadGrid<SnakeCell>(device: packet.device, width: width, height: height)
+        black = ThreadGridBuffer<SnakeCell>(device: packet.device, width: width, height: height)
+        white = ThreadGridBuffer<SnakeCell>(device: packet.device, width: width, height: height)
+        debug1 = ThreadGridBuffer<SnakeCell>(device: packet.device, width: width, height: height)
+        debug2 = ThreadGridBuffer<SnakeCell>(device: packet.device, width: width, height: height)
+        debug3 = ThreadGridBuffer<SnakeCell>(device: packet.device, width: width, height: height)
         headDirection = .zero
         initialSpot()
     }
-    mutating func initialSpot() {
+    public mutating func initialSpot() {
         var cell = SnakeCell()
         
         cell.base.density = 1.0
@@ -119,7 +119,7 @@ struct SnakeFridge {
         renderBlackWhite()
     }
     
-    func copy(from: ThreadGrid<SnakeCell>, to: ThreadGrid<SnakeCell>) {
+    func copy(from: ThreadGridBuffer<SnakeCell>, to: ThreadGridBuffer<SnakeCell>) {
         let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
         let blitEncoder = commandBuffer.makeBlitCommandEncoder()!
         blitEncoder.copy(from: from.buffer, 

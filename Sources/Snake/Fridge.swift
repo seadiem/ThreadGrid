@@ -9,18 +9,22 @@ struct Fridge {
     init() {
         body = Body()
         
-        var position: SIMD3<Float> = [0, -2.5, 0]
-        var translateMatrix = simd_float4x4(translation: position)
-        let rotateMatrix = simd_float4x4(rotation: .zero)
-        let scaleMatrix = simd_float4x4(scaling: .one)
-        var modelMatrix = translateMatrix * rotateMatrix * scaleMatrix
-        var transforms = [CoubeTransform]()
-        transforms.append(CoubeTransform(modelMatrix: modelMatrix))
-        position.y += 5.01
-        translateMatrix = simd_float4x4(translation: position)
-        modelMatrix = translateMatrix * rotateMatrix * scaleMatrix
-        transforms.append(CoubeTransform(modelMatrix: modelMatrix))
-        self.transforms = transforms
+        var cubes = [Body]()
+        
+        (-2...2).forEach { x in
+            (-2...2).forEach { y in
+                var body = Body()
+                body.position.x = 5 * Float(x)
+                body.position.y = 5 * Float(y)
+                body.position.z = Float(Int.random(in: -2...2)) / 5
+                cubes.append(body)
+            }
+        }
+        
+        cubes[7].position.z = -5
+        
+        self.transforms = cubes.map { CoubeTransform(modelMatrix: $0.modelMatrix, normalMatrix: $0.normalMatrix) }
+
     }
 }
 

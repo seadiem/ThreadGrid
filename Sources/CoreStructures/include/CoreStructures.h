@@ -34,6 +34,7 @@ struct FragmentUniforms {
 
 struct CoubeTransform {
     simd_float4x4 modelMatrix;
+    simd_float3x3 normalMatrix;
 };
 
 struct SnakeFridgeUniforms {

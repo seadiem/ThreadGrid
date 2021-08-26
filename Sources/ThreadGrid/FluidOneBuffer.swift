@@ -3,9 +3,9 @@ import RenderSetup
 struct FluidFridgeOne {
     let width = 18
     let height = 18
-    var black: ThreadGrid<FluidCell>
+    var black: ThreadGridBuffer<FluidCell>
     init(packet: RenderPacket) {
-        black = ThreadGrid<FluidCell>(device: packet.device, width: width, height: height)
+        black = ThreadGridBuffer<FluidCell>(device: packet.device, width: width, height: height)
         touchSpot()
     }
     mutating func touchSpot() {

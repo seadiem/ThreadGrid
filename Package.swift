@@ -17,7 +17,7 @@ let package = Package(
     targets: [
         .target(name: "CoreStructures", dependencies: []),
         .target(name: "Draw", dependencies: []),
-        .target(name: "RenderSetup", dependencies: []),
+        .target(name: "RenderSetup", dependencies: ["Files"]),
         .target(name: "Math", dependencies: []),
         .target(name: "App", dependencies: ["Draw"]),
         .target(
