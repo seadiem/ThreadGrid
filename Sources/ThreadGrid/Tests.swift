@@ -1,45 +1,54 @@
 import CoreStructures
+import Induction
+import RenderSetup
 
 public struct TestThreadGrid {
     public init() {}
     public func run() {
 //        TestPixel().run()
 //        TestFridge().run()
-//        TestQuickPass().run()
 //        CheckSimd().run()
 //        Geometry().test()
-        Ctest().run()
+//        Ctest().run()
+//        Test3DGrid().run()
+//        TestQuickPass().run()
+        TestStencil().run()
     }
 }
 
 struct TestQuickPass {
     func run() {
-        fluid()
+        debug()
     }
     func reshape() {
         TestReshape().run()
     }
     func debug() {
-        var pass = DebugQuickPass()
+        var pass = QuickPass3D()
         pass.pass()
         pass.render()
     }
     func fluid() {
-        var pass = FluidQuickPass()
+        var pass = QuickPass3D()
         while let _ = readLine() {
             pass.pass()
             pass.render()
-            pass.further()    
         }
     }
 }
 
 struct Ctest {
-    func run() {
+    func testArray() {
         let s: Array<Int32> = [1, 2, 3, 4]
         let uint8Pointer = UnsafeMutablePointer<Int32>.allocate(capacity: 4)
         uint8Pointer.initialize(from: s, count: 4)
         printIntArrayContent(uint8Pointer, 4)
+    }
+    func testStencil() {
+        makeStencil()
+    }
+    func run() {
+        testStencil()
     }
 }
 
@@ -49,4 +58,30 @@ struct CheckSimd {
         let b = a &+ 1
         print(b)
     }
+}
+
+struct Test3DGrid {
+    
+    struct TestCell: EmptyInit, LengthSupplier, CustomStringConvertible {
+        static var length: Int { MemoryLayout<TestCell>.stride }
+        let index: SIMD3<Int>
+        var description: String { "(\(index.x) \(index.y) \(index.z))" }
+        var isEmpty: Bool { index == .zero }
+        init() {
+            index = .zero
+        }
+    }
+    
+    func run() {
+        let packet = RenderPacket()
+        let grid = ThreadGridBuffer3D<TestCell>(device: packet.device, width: 4, height: 4, depth: 4)
+        grid.columns.forEach { field in
+            field.forEach { column in
+                print(column)
+            }
+        }
+        grid.fillBuffer()
+ //       grid.unbind()
+    }
+    
 }

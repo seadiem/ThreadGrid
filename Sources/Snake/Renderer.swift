@@ -17,7 +17,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let setVelocityState: MTLComputePipelineState
     
     // Render
-    let pipelineState: MTLRenderPipelineState!
+    let pipelineState: MTLRenderPipelineState
     let depthStencilState: MTLDepthStencilState
     
     // Model
@@ -71,21 +71,14 @@ class Renderer: NSObject, MTKViewDelegate {
         super.init()
     }
     
-    func draw(in view: MTKView) {
-        let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
-
-        //
+    func compute() {
+        print("compute")
+        let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!    
         let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
-        var width = clearTextureState.threadExecutionWidth
-        var height = clearTextureState.maxTotalThreadsPerThreadgroup / width
-        var threadsPerGroup = MTLSizeMake(width, height, 1)
-        var threadsPerGrid = MTLSizeMake(Int(view.drawableSize.width), Int(view.drawableSize.height), 1)
-        commandEncoder.setComputePipelineState(clearTextureState)
-        commandEncoder.setTexture(view.currentDrawable!.texture, index: 0)
-        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-        
-        width = advectState.threadExecutionWidth
-        height = advectState.maxTotalThreadsPerThreadgroup / width
+
+
+        var width = advectState.threadExecutionWidth
+        var height = advectState.maxTotalThreadsPerThreadgroup / width
         commandEncoder.setComputePipelineState(advectState)
         commandEncoder.setBuffer(fridge.black.buffer, offset: 0, index: 0) // From
         commandEncoder.setBuffer(fridge.white.buffer, offset: 0, index: 1) // To
@@ -93,8 +86,8 @@ class Renderer: NSObject, MTKViewDelegate {
         commandEncoder.setBuffer(fridge.debug3.buffer, offset: 0, index: 3) 
         commandEncoder.setBuffer(fridge.debug2.buffer, offset: 0, index: 4)
         commandEncoder.setBuffer(fridge.debug1.buffer, offset: 0, index: 5)
-        threadsPerGroup = MTLSizeMake(width, height, 1)
-        threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
+        var threadsPerGroup = MTLSizeMake(width, height, 1)
+        var threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         
         width = copyState.threadExecutionWidth
@@ -124,7 +117,14 @@ class Renderer: NSObject, MTKViewDelegate {
                          size: fridge.white.biteSize)
         blitEncoder.endEncoding()
         
-        //
+        commandBuffer.commit()
+        commandBuffer.waitUntilCompleted()
+        scene.white = fridge.white
+    }
+    
+    func draw(in view: MTKView) {
+        
+        let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
         let descriptor = view.currentRenderPassDescriptor!
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)!
         renderEncoder.setDepthStencilState(depthStencilState)
@@ -141,7 +141,9 @@ class Renderer: NSObject, MTKViewDelegate {
 
 // Touch API
 extension Renderer {
-    func mouseDown(at point: CGPoint) {}
+    func mouseDown(at point: CGPoint) {
+        compute()
+    }
     func mouseDrug(at point: CGPoint) {
         guard let dif = track.getDiff(touch: point.simd2float) else { return }
         rotateXY += dif / 100

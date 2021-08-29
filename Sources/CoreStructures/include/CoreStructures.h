@@ -1,7 +1,8 @@
 #import <simd/simd.h>
 struct SnakeCellC {
+    simd_float2 position;
     simd_float2 velocity;
-    simd_float2 info;
+    simd_float3 info;
     float density;
     char cell; // 0 field, 1 body, 2 head, 3 target
     char velocityAllow; // 0 disallow, 1 allow
@@ -43,3 +44,11 @@ struct SnakeFridgeUniforms {
     simd_float4x4 cameraModelMatrix;
     simd_float4x4 cameraProjectionMatrix;
 };
+
+#define STENCIL 8
+#define STENCIL3D (STENCIL * 3 + 2)
+struct Stencil3x3 {
+    simd_float3 offsets[STENCIL3D];
+};
+
+void makeStencil(void);

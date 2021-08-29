@@ -18,19 +18,20 @@ public struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
         if base.density > 0.5 { return "◼︎" }
         else { return "◻︎" }
     }
-//        var description: String { "[\(info.x), \(info.y)]" }
+//    public var description: String { "[\(base.position.x), \(base.position.y)]" }
+    public var description: String { "[\(base.info.x), \(base.info.y), \(base.info.z)]" }
     //    var description: String { String(char) }
 //        var description: String { "[\(velocity.x),\(velocity.y), \(char)]" }
 //    var description: String { "[\(velocity.x),\(velocity.y); \(char)]" }
-    public var description: String { 
-        var out = "" 
-        if "\(base.density)".count == 3 {
-            out = "0"
-        }
-        out = "\(base.density)" + out
-//        return out
-        return "[\(base.velocity.x),\(base.velocity.y), \(out), \(base.cell)]" 
-    }
+//    public var description: String { 
+//        var out = "" 
+//        if "\(base.density)".count == 3 {
+//            out = "0"
+//        }
+//        out = "\(base.density)" + out
+////        return out
+//        return "[\(base.velocity.x),\(base.velocity.y), \(out), \(base.cell)]" 
+//    }
     public var isEmpty: Bool { false }
     public init() {
 //        velocity = .zero
@@ -39,7 +40,7 @@ public struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
 //        cell = 0
 //        velocityAllow = true;
         
-        base = SnakeCellC(velocity: .zero, info: .zero, density: 0, cell: 0, velocityAllow: 1)
+        base = SnakeCellC(position: .zero, velocity: .zero, info: .zero, density: 0, cell: 0, velocityAllow: 1)
         
     }
 }

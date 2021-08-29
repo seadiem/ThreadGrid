@@ -42,6 +42,7 @@ public struct SnakeCook {
                 metalView.setNeedsDisplay(canvas.bounds)
             }
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { (e) -> NSEvent? in
+                print("e: \(e)")
                 switch e.keyCode {
                 case 49: metalView.setNeedsDisplay(canvas.bounds)
                 case 83: renderer.fridge.headDirection = [-1, 1]
@@ -58,7 +59,7 @@ public struct SnakeCook {
                 return e
             }
     
-            
+            print("ONE")
             defer {
                 command(renderer: renderer, metalView: metalView, canvas: canvas)
             }

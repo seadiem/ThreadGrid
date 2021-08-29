@@ -7,6 +7,46 @@ public protocol LengthSupplier {
     static var length: Int { get }
 }
 
+public struct ThreadGridBuffer3D<Cell: EmptyInit & LengthSupplier> {
+    let width: Int
+    let height: Int
+    let depth: Int
+    let size: Int
+    var columns: [[[Cell]]]
+    public let buffer: MTLBuffer
+    var tempStorage: Array<Cell>
+    var plainarray: [Cell] { columns.reduce(into: [[Cell]]()) { $0 += $1 }.reduce(into: [Cell]()) {  $0 += $1 } }
+    public var biteSize: Int { size * Cell.length }
+    public init(device: MTLDevice, width: Int, height: Int, depth: Int) {
+        self.width = width
+        self.height = height
+        self.depth = depth
+        size = width * height * depth
+        columns = Array(repeating: Array(repeating: Array(repeating: Cell(), count: depth), count: height), count: width)
+        buffer = device.makeBuffer(length: size * Cell.length, options: .storageModeShared)!
+        tempStorage = Array(repeating: Cell(), count: size)
+        fillBuffer()
+    }
+    func fillBuffer() {
+        buffer.contents().copyMemory(from: plainarray, byteCount: size * Cell.length)
+    }
+    mutating func unbind() {    
+        print("UNBIND")
+        let result = buffer.contents().bindMemory(to: Cell.self, capacity: size)
+        for i in tempStorage.indices { tempStorage[i] = result[i] }
+        
+        print(tempStorage)
+        
+//        let z = tempStorage.chunks(ofCount: depth)
+//        z.forEach { print($0) }
+        
+ //       columns = tempStorage.chunks(ofCount: height).map { Array($0) }
+    }
+    func render() {
+        ColumnsToRows(columns: columns)!.rows.forEach { print($0) }
+    }
+}
+
 public struct ThreadGridBuffer<Cell: EmptyInit & LengthSupplier> {
     let width: Int
     let height: Int

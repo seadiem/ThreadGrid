@@ -37,7 +37,10 @@ public struct SnakeCook {
                 metalView.setNeedsDisplay(canvas.bounds)
             }
             
-            canvas.mousedown = { point in renderer.mouseDown(at: point) }
+            canvas.mousedown = { point in 
+                renderer.mouseDown(at: point) 
+                metalView.setNeedsDisplay(canvas.bounds)
+            }
             canvas.mouseup = { point in renderer.mouseUp(at: point)  }
             
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { (e) -> NSEvent? in

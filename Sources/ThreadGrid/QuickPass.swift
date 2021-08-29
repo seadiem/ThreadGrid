@@ -62,3 +62,72 @@ class QuickPass {
     }
 }
 
+struct FluidQuickPass {
+    let renderPacket: RenderPacket
+    let state: MTLComputePipelineState
+    var fridge: FluidFridge
+    init() {
+        renderPacket = RenderPacket()        
+        let library = renderPacket.library
+        let function = library.makeFunction(name: "moveCellsPrecise")!
+        state = try! renderPacket.device.makeComputePipelineState(function: function)
+        fridge = FluidFridge(packet: renderPacket)
+    }
+    func pass() {
+        let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
+        let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
+        commandEncoder.setComputePipelineState(state)
+        commandEncoder.setBuffer(fridge.current.buffer, offset: 0, index: 0)
+        commandEncoder.setBuffer(fridge.next.buffer, offset: 0, index: 1)
+        let width = state.threadExecutionWidth
+        let height = state.maxTotalThreadsPerThreadgroup / width
+        let threadsPerGroup = MTLSizeMake(height, height, 1)
+        let threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        commandEncoder.endEncoding()
+        commandBuffer.commit()
+        commandBuffer.waitUntilCompleted()
+    }
+    mutating func further() {
+        fridge.further()
+    }
+    var count = 0
+    mutating func render() {
+        print("RENDER: \(count)")
+        fridge.white.unbind()
+        fridge.black.unbind()
+        fridge.current.render()
+        count += 1
+    }
+}
+
+
+struct QuickPass3D {
+    let renderPacket: RenderPacket
+    let state: MTLComputePipelineState
+    var black: ThreadGridBuffer3D<SnakeCell>
+    init() {
+        renderPacket = RenderPacket()        
+        let library = renderPacket.library
+        let function = library.makeFunction(name: "unitAdvectVelocitySnake3D")!
+        state = try! renderPacket.device.makeComputePipelineState(function: function)
+        black = ThreadGridBuffer3D<SnakeCell>(device: renderPacket.device, width: 4, height: 4, depth: 4)
+    }
+    func pass() {
+        let commandBuffer = renderPacket.commandQueue.makeCommandBuffer()!
+        let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
+        commandEncoder.setComputePipelineState(state)
+        commandEncoder.setBuffer(black.buffer, offset: 0, index: 0)
+        let width = state.threadExecutionWidth
+        let height = state.maxTotalThreadsPerThreadgroup / width
+        let threadsPerGroup = MTLSizeMake(width, height, 1)
+        let threadsPerGrid = MTLSizeMake(black.width, black.height, black.depth)
+        commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+        commandEncoder.endEncoding()
+        commandBuffer.commit()
+        commandBuffer.waitUntilCompleted()
+    }
+    mutating func render() {
+        black.unbind()
+    }
+}
