@@ -12,7 +12,7 @@ public struct TestThreadGrid {
 //        Ctest().run()
 //        Test3DGrid().run()
 //        TestQuickPass().run()
-        TestStencil().run()
+//        TestStencil().run()
     }
 }
 
@@ -75,13 +75,33 @@ struct Test3DGrid {
     func run() {
         let packet = RenderPacket()
         let grid = ThreadGridBuffer3D<TestCell>(device: packet.device, width: 4, height: 4, depth: 4)
-        grid.columns.forEach { field in
+        grid.grids.forEach { field in
             field.forEach { column in
                 print(column)
             }
         }
         grid.fillBuffer()
  //       grid.unbind()
+    }
+    
+}
+
+struct ArrayBug {
+    func check() {
+        let a = [1, 3]
+        get(array: a)
+        let b = [a, a]
+        get2(array: b)
+//        get(array: b)
+        getAndBreak(array: b)
+    }
+    func get(array: [Int]) {
+        array.forEach { print($0) }
+    }
+    func get2(array: [[Int]]) {
+        array.forEach { print($0) }
+    }
+    func getAndBreak<Element>(array: [Element]) {
     }
     
 }

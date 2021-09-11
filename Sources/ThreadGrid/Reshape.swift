@@ -1,3 +1,14 @@
+import Induction
+import Algorithms
+
+
+struct PlainTo3DGrid {
+    func grid<Cell>(from plain: [Cell], size: (w: Int, h: Int, d: Int)) -> [[[Cell]]] {
+        plain.chunks(ofCount: size.w * size.h).map { chunk -> [[Cell]] in 
+            chunk.chunks(ofCount: size.h).map { Array($0) } }
+    }
+}
+
 struct ColumnsToRows<Element> {
     
     let columns: [[Element]]

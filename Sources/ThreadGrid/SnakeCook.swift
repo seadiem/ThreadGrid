@@ -45,14 +45,16 @@ public struct SnakeCook {
                 print("e: \(e)")
                 switch e.keyCode {
                 case 49: metalView.setNeedsDisplay(canvas.bounds)
-                case 83: renderer.fridge.headDirection = [-1, 1]
-                case 84: renderer.fridge.headDirection = [ 0, 1]
-                case 85: renderer.fridge.headDirection = [ 1, 1]
-                case 86: renderer.fridge.headDirection = [-1, 0]
-                case 88: renderer.fridge.headDirection = [ 1, 0]
-                case 89: renderer.fridge.headDirection = [-1,-1]
-                case 91: renderer.fridge.headDirection = [ 0,-1]
-                case 92: renderer.fridge.headDirection = [ 1,-1]
+                case 83: renderer.fridge.headDirection = [-1, 1, 0]
+                case 84: renderer.fridge.headDirection = [ 0, 1, 0]
+                case 85: renderer.fridge.headDirection = [ 1, 1, 0]
+                case 86: renderer.fridge.headDirection = [-1, 0, 0]
+                case 88: renderer.fridge.headDirection = [ 1, 0, 0]
+                case 89: renderer.fridge.headDirection = [-1,-1, 0]
+                case 91: renderer.fridge.headDirection = [ 0,-1, 0]
+                case 92: renderer.fridge.headDirection = [ 1,-1, 0]
+                case 78: renderer.fridge.headDirection = [ 0, 0,-1]
+                case 69: renderer.fridge.headDirection = [ 0, 0, 1]
                 default: break
                 }
                 renderer.setVelocity()

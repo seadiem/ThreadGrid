@@ -15,24 +15,11 @@ struct Stencil2D {
     ]
 }
 
-extension Stencil3x3 {
-    init?(array: [SIMD3<Float>]) {
-        let arrayByteSize = array.count * MemoryLayout<SIMD3<Float>>.stride
-        let cArrayByteSize = MemoryLayout<Self>.size
-        guard arrayByteSize == cArrayByteSize else { return nil }
-        guard let cArray = array.withUnsafeBytes({ ptr -> Stencil3x3? in
-            guard let baseAddress = ptr.baseAddress else { return nil }
-            let cPtr = baseAddress.assumingMemoryBound(to: Self.self)
-            return cPtr.pointee
-        }) else { return nil }
-        self = cArray
-    }
-}
-
-struct Stencil3D {
+public struct Stencil3D {
     static let stencil3x3: Stencil3D = Stencil3D(profile: Stencil2D()) 
     let offsets: [SIMD3<Float>]
-    let cStencil: Stencil3x3 
+    let cStencil: Stencil3x3
+    public var length: Int { MemoryLayout<Stencil3x3>.stride }
     init(profile: Stencil2D) {
         let offsets = profile.offsets.map { v -> SIMD3<Int> in [v.x, v.y, 0] }
         var out = [SIMD3<Int>]()
@@ -50,9 +37,15 @@ struct Stencil3D {
         out.append([0, 0, 1])
         out.append([0, 0, -1])
         self.offsets = out.map { SIMD3<Float>($0) }
-        self.cStencil = Stencil3x3(array: self.offsets)!
+        
+        self.cStencil = self.offsets.withUnsafeBytes {
+            return $0.load(as: Stencil3x3.self) 
+            // This is allowed because Stencil3x3 only has one
+            // stored property (a tuple of 26 SIMD3<Float>
+            // instances), so its layout is the same as its stored property.
+            // look LINKS
+        }
     }
-
 }
 
 struct TestStencil {
@@ -61,3 +54,6 @@ struct TestStencil {
         print("count: \(stencil.cStencil.offsets)")
     }
 }
+
+// LINKS
+// https://forums.swift.org/t/how-to-use-c-api-with-fixed-size-cs-array/51569/7

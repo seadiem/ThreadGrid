@@ -9,7 +9,7 @@ class Scene {
     let coub: Coub
     var fridge: Fridge
     var camera: Camera
-    var white: ThreadGridBuffer<SnakeCell>?
+    var white: ThreadGridBuffer3D<SnakeCell>?
     
     init(renderPacket: RenderPacket) {
         fridge = Fridge()
