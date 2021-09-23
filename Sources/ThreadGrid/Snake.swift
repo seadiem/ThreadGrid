@@ -14,7 +14,7 @@ public struct SnakeCell: CustomStringConvertible, EmptyInit, LengthSupplier {
     public var description: String { "\(Int(base.density))" }
     public var isEmpty: Bool { false }
     public init() {
-        base = SnakeCell3D(position: .zero, velocity: .zero, info: .zero, density: 0, cell: 0, rem: 0, velocityAllow: 1)
+        base = SnakeCell3D(position: .zero, velocity: .zero, info: .zero, density: 0, cell: 0, rem: 0)
     }
 }
 

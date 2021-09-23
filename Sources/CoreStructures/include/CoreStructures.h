@@ -15,9 +15,8 @@ struct SnakeCell3D {
     simd_float3 velocity;
     simd_float3 info;
     float density;
-    char cell; // 0 field, 1 body, 2 head, 3 target
+    char cell; // 0 field, 4 target
     uint32_t rem;
-    char velocityAllow;
 };
 
 void printIntArrayContent(int* array, int size);
