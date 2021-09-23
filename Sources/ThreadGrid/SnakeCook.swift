@@ -46,7 +46,6 @@ public struct SnakeCook {
    //             print("e: \(e)")
                 switch e.keyCode {
                 case 49: 
-                    print("space")
                     metalView.setNeedsDisplay(canvas.bounds)
                 case 83: renderer.fridge.headDirection = [-1, 1, 0]
                 case 84: renderer.fridge.headDirection = [ 0, 1, 0]
@@ -64,7 +63,6 @@ public struct SnakeCook {
                 return e
             }
     
-            print("ONE")
             defer {
                 command(renderer: renderer, metalView: metalView, canvas: canvas)
             }
