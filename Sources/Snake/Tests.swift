@@ -5,7 +5,8 @@ import CoreStructures
 public struct SnakeTest {
     public init() {}
     public func run() {
-        InspectMesh().run()
+//        InspectMesh().run()
+        Different().run()
     }
 }
 
@@ -74,6 +75,18 @@ struct TestRotation {
         let a = atan(direction.y / direction.x)
         let alpha = atan2(direction.y, direction.x)
         print("a: \(a), alpha: \(alpha)")
+    }
+    
+}
+
+struct Different {
+
+    func run() {
+        let exists = ["Cat", "Dog", "Mouse"]
+        let incom = ["Cat", "Dog", "Mouse", "Fish", "Monkey"]
+        let diff = incom.difference(from: exists)
+        print(type(of: diff))
+        diff.forEach { print($0) }
     }
     
 }

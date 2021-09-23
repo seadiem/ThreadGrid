@@ -41,10 +41,13 @@ public struct SnakeCook {
                 //               renderer.set(point: [Float(point.x), -Float(point.y) + 200])
                 metalView.setNeedsDisplay(canvas.bounds)
             }
+            
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { (e) -> NSEvent? in
-                print("e: \(e)")
+   //             print("e: \(e)")
                 switch e.keyCode {
-                case 49: metalView.setNeedsDisplay(canvas.bounds)
+                case 49: 
+                    print("space")
+                    metalView.setNeedsDisplay(canvas.bounds)
                 case 83: renderer.fridge.headDirection = [-1, 1, 0]
                 case 84: renderer.fridge.headDirection = [ 0, 1, 0]
                 case 85: renderer.fridge.headDirection = [ 1, 1, 0]
@@ -92,6 +95,7 @@ public struct SnakeCook {
                             let s = f.split(separator: ":")
                             guard s.count == 2, let x = Int(s.first!), let y = Int(s.last!) else { return }
                             renderer.tapAt(x: x, y: y)
+                            metalView.setNeedsDisplay(canvas.bounds)
                         }
                     }
                 case "force": 

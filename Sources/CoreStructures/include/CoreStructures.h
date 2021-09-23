@@ -1,4 +1,6 @@
 #import <simd/simd.h>
+#include <stdint.h>
+
 struct SnakeCellC {
     simd_float2 position;
     simd_float2 velocity;
@@ -14,6 +16,7 @@ struct SnakeCell3D {
     simd_float3 info;
     float density;
     char cell; // 0 field, 1 body, 2 head, 3 target
+    uint32_t rem;
     char velocityAllow;
 };
 

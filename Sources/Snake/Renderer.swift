@@ -83,9 +83,7 @@ class Renderer: NSObject, MTKViewDelegate {
         commandEncoder.setBuffer(fridge.black.buffer, offset: 0, index: 0) // From
         commandEncoder.setBuffer(fridge.white.buffer, offset: 0, index: 1) // To
         commandEncoder.setBuffer(fridge.infobuffer.buffer, offset: 0, index: 2)
-        commandEncoder.setBuffer(fridge.debug3.buffer, offset: 0, index: 3) 
-        commandEncoder.setBuffer(fridge.debug2.buffer, offset: 0, index: 4)
-        commandEncoder.setBuffer(fridge.debug1.buffer, offset: 0, index: 5)
+        commandEncoder.setBuffer(fridge.debug.buffer, offset: 0, index: 5)
         var threadsPerGroup = MTLSizeMake(width, height, 1)
         var threadsPerGrid = MTLSizeMake(fridge.width, fridge.height, 1)
         commandEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)

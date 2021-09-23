@@ -39,7 +39,7 @@ public struct ThreadGridBuffer3D<Cell: EmptyInit & LengthSupplier> {
         grids = PlainTo3DGrid().grid(from: tempStorage, size: (w: width, h: height, d: depth))
     }
     func render() {
-        grids.forEach { columns in
+        grids.prefix(1).forEach { columns in
             ColumnsToRows(columns: columns)!.rows.forEach { 
                 print($0) 
             }

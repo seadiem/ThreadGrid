@@ -13,7 +13,7 @@ struct Scene {
 //        App(packet: Apps().snake).run()
     }
     func test() {
-        TestThreadGrid().run()
-//        SnakeTest().run()
+//        TestThreadGrid().run()
+        SnakeTest().run()
     }
 }
